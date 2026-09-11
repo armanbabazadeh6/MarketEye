@@ -54,6 +54,7 @@ function showDialog(title, html) {
 }
 $("close-dialog").onclick = () => $("detail-dialog").close();
 mountMarketTerminal({
+  getWorldSources: () => snapshot.sources,
   onCompany: selectCompany,
   onLocation: (location) => globe?.flyTo(location),
 });
