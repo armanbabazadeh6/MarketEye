@@ -136,6 +136,9 @@ export function mountMarketTerminal({
   root.querySelector(".terminal-bottom").before(utility);
   let history = [],
     historyIndex = 0;
+  let symbolTimer,
+    symbolGeneration = 0,
+    historyNavigating = false;
   try {
     history = JSON.parse(
       localStorage.getItem("marketeye-command-history") || "[]",
@@ -143,6 +146,7 @@ export function mountMarketTerminal({
       .filter((s) => typeof s === "string")
       .slice(-40);
   } catch {}
+  historyIndex = history.length;
   function showUtility(kind) {
     if (kind === "help") {
       utility.innerHTML = `<div class="panel-heading">COMMAND REFERENCE</div><table class="command-table">${[
@@ -329,7 +333,6 @@ export function mountMarketTerminal({
       article = activeArticle === null ? null : classifyHeadline(activeArticle);
     $("market-drivers").innerHTML =
       `<div class="driver-intro"><span class="eyebrow">OBSERVED PRICE</span><h2>${esc(selected.name)}</h2><p>${esc(d.observed)}</p><span class="research-badge">CAUSATION UNCONFIRMED</span></div>${article ? `<section class="article-detail"><span class="eyebrow">SELECTED REPORT</span><h3>${esc(article.title)}</h3><p>${esc(article.domain)} · ${stamp(article.publishedAt)}</p><a href="${esc(article.url)}" target="_blank" rel="noopener noreferrer">Read publisher report ↗</a>${article.location ? `<button id="headline-map">Locate ${esc(article.location.name)} ↗</button><small>Approximate region inferred from headline.</small>` : ""}</section>` : ""}<div class="driver-content"><span class="eyebrow">POSSIBLE TRANSMISSION CHANNELS</span>${(article ? article.channels : d.channels).map((c) => `<section class="transmission"><h3>${esc(c.label)}</h3><div class="transmission-path">${c.path.map((p) => `<span>${esc(p)}</span>`).join("<i>↓</i>")}</div><p>${esc(c.explanation)}</p><div class="related-symbols">${c.symbols.map((s) => `<button data-symbol="${s}">${s}</button>`).join("")}</div></section>`).join("") || "<p>Select a headline to inspect a possible market connection.</p>"}<p class="evidence-note">${esc(d.conclusion)}</p><p class="evidence-note">${esc(d.caveat)}</p>${selected.symbol === "RB=F" ? `<a href="${d.sourceUrl}" target="_blank" rel="noopener noreferrer">EIA: what determines pump prices ↗</a>` : ""}${["NVDA", "AAPL", "TSLA"].includes(selected.symbol) ? '<button id="company-map" class="map-link">Explore company supply network ↗</button>' : ""}<a class="quote-source" href="https://finance.yahoo.com/quote/${encodeURIComponent(selected.symbol)}/" target="_blank" rel="noopener noreferrer">Quote source: Yahoo Finance ↗</a><p class="evidence-note">Indicative public feed; may be delayed. Headline classification is deterministic research assistance, not verified causation.</p></div>`;
-    newsroom.attachNotes(article);
     if (article?.official) {
       const details = document.createElement("section");
       details.className = "official-alert-details";
@@ -354,6 +357,7 @@ export function mountMarketTerminal({
         }
       };
     }
+    newsroom.attachNotes(article);
     if ($("company-map"))
       $("company-map").onclick = () => {
         desk("globe");
@@ -423,6 +427,13 @@ export function mountMarketTerminal({
       const q = await api({ kind: "quote", symbol, range: "1d" });
       quotes.set(symbol, q);
       if (g === generation) {
+        if (selected.name === selected.symbol && q.name)
+          selected = {
+            ...selected,
+            name: q.name,
+            unit: q.currency || selected.unit,
+            query: q.name + " stock",
+          };
         renderSecurity();
         renderWatch();
       }
@@ -481,6 +492,29 @@ export function mountMarketTerminal({
     }
   });
   $("security-news").onclick = () => loadNews(selected.query + " when:3d");
+  $("market-query").oninput = (e) => {
+    historyNavigating = false;
+    clearTimeout(symbolTimer);
+    const value = e.target.value.trim(),
+      g = ++symbolGeneration;
+    if (
+      value.length < 2 ||
+      value.length > 60 ||
+      /^(NEWS|COMPARE|COMP|GP|ANALYST|ASK|BRIEF|INV|GEO|DES)\s/i.test(value) ||
+      value.split(/\s+/).length > 3
+    )
+      return;
+    symbolTimer = setTimeout(async () => {
+      const result = await api({ kind: "search", q: value });
+      if (g !== symbolGeneration || !result.matches?.length) return;
+      $("market-symbols").innerHTML = result.matches
+        .map(
+          (r) =>
+            `<option value="${esc(r.symbol)}">${esc(r.name)} / ${esc(r.exchange)}</option>`,
+        )
+        .join("");
+    }, 450);
+  };
   $("market-command").onsubmit = (e) => {
     e.preventDefault();
     const text = $("market-query").value.trim();
@@ -584,7 +618,11 @@ export function mountMarketTerminal({
     }
   };
   $("market-query").onkeydown = (e) => {
-    if (["ArrowUp", "ArrowDown"].includes(e.key)) {
+    if (
+      ["ArrowUp", "ArrowDown"].includes(e.key) &&
+      (e.altKey || !e.target.value || historyNavigating)
+    ) {
+      historyNavigating = true;
       e.preventDefault();
       historyIndex = Math.max(
         0,

@@ -21,6 +21,8 @@ const stamp = (v) =>
         minute: "2-digit",
       })
     : "Undated";
+const queryLabel = (q) =>
+  q === "@official-alerts" ? "NWS active US alerts / Severe and Extreme" : q;
 export function downloadFile(name, content, type = "text/plain") {
   const url = URL.createObjectURL(new Blob([content], { type })),
     a = document.createElement("a");
@@ -34,7 +36,20 @@ export class Newsroom {
     this.onSelect = onSelect;
     this.onSearch = onSearch;
     this.onStatus = onStatus;
-    this.store = new ResearchStore(localStorage);
+    let storage;
+    try {
+      storage = localStorage;
+    } catch {
+      storage = {
+        getItem() {
+          throw Error("Browser storage unavailable");
+        },
+        setItem() {
+          throw Error("Browser storage unavailable");
+        },
+      };
+    }
+    this.store = new ResearchStore(storage);
     this.news = { articles: [] };
     this.saved = false;
     this.selected = null;
@@ -180,7 +195,7 @@ export class Newsroom {
       : (this.news.status || "loading").toUpperCase();
     $("wire-query").textContent = this.saved
       ? "Saved research / stored on this browser"
-      : `${this.news.query || "Loading…"}${this.news.retrievedAt ? " · fetched " + stamp(this.news.retrievedAt) : ""}`;
+      : `${queryLabel(this.news.query) || "Loading…"}${this.news.retrievedAt ? " · fetched " + stamp(this.news.retrievedAt) : ""}`;
     $("wire-saved").textContent =
       `${this.saved ? "← Live wire" : "Saved stories"} (${this.store.data.stories.length})`;
     $("wire-saved").classList.toggle("active", this.saved);
@@ -188,7 +203,7 @@ export class Newsroom {
     $("saved-searches").innerHTML = this.store.data.searches
       .map(
         (q, i) =>
-          `<span><button data-search-index="${i}" title="${esc(q)}">${esc(q)}</button><button data-remove-search="${i}" aria-label="Remove saved search">×</button></span>`,
+          `<span><button data-search-index="${i}" title="${esc(queryLabel(q))}">${esc(queryLabel(q))}</button><button data-remove-search="${i}" aria-label="Remove saved search">×</button></span>`,
       )
       .join("");
     $("news-wire").innerHTML =

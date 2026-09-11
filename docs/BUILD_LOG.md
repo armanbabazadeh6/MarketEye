@@ -15,5 +15,7 @@ The terminal is a local research application, not an order-execution system. No 
 ## Completed checkpoints
 
 - `a140f55`: denser terminal styling, persistent research notebook, publisher/time/text filters, saved searches, import/export, sorted quote monitor, common-date performance comparison, command parser. Unit and real-browser research checks passed.
-- Next checkpoint: official NWS Severe/Extreme alerts, regional footprint links, approximate news markers, cross-company investigation command, geographic analyst command and combined dossiers. Live NWS returned 31 active alerts during validation. Integrated browser checks passed for the feed, globe context, dossier content and analyst/tour actions.
+- `afe8fbb`: official NWS Severe/Extreme alerts, regional footprint links, approximate news markers, cross-company investigation command, geographic analyst command and combined dossiers. Live NWS returned 31 active alerts during validation. Integrated browser checks passed for the feed, globe context, dossier content and analyst/tour actions.
 - Network loss now retains the last successful quote/news snapshot with a visible stale state. Never-successful sources remain unavailable. Source timestamps are preserved.
+- v0.3 verification: 2,856 unit tests passed, five skipped, and two Node-24 allocation benchmarks excluded on local Node 22. All four browser workflows passed. Production build passed. A fresh `npm start` started the terminal successfully on loopback port 4173.
+- Recovery hardening preserves unreadable research for backup and explicit repaired import. Libraries enforce a portable size limit. Symbol suggestions now use the public Yahoo issuer search with exchange labels.

@@ -32,6 +32,8 @@ npm run test:marketeye # focused MarketEye domain tests
 npm test               # full retained upstream + MarketEye suite
 npm run qa:marketeye   # browser QA; start the dev server first
 npm run qa:terminal    # real quote/news, chart, gas question, mobile and outage checks
+npm run qa:research    # saved research, notes, comparisons, commands and mobile
+npm run qa:integrated  # official alerts, regional links, dossiers, analyst and tours
 ```
 
 The default is a local application. **A static-only host does not run the weather, aircraft, vessel or AI proxies.** Do not treat Vite's local development server as a hardened public production service. Production hosting needs an authenticated server deployment of the relevant adapters, appropriate provider terms, rate limits and secret management.
@@ -44,10 +46,45 @@ The default is a local application. **A static-only host does not run the weathe
 | **F2 Globe** | Explore the curated NVIDIA, Apple and Tesla footprints, public world events and investigation tours. |
 | **F3 News** | Browse Markets, Energy, Incidents or Technology. Enter a question or place in the command bar to search current headlines. |
 | **F4 Energy** | Start with crude oil and the energy wire; switch to `BZ=F`, `RB=F`, or `NG=F` in the watchlist or universe. |
+| **F5 Monitor** | Sort quote columns, load the market universe, export CSV, and compare two to four securities over common daily observations. |
+| **F6 Status** | Inspect provider availability, original source timestamps, retrieval times and stale states. |
 
 Try **“why is gas up”**, **“natural gas prices”**, or **“Houston refinery fire”**. The first selects gasoline futures and related reports. The terminal checks the actual available price direction—even when the question assumes a rise—and shows possible economic transmission channels. Select a headline to open its publisher report, inspect related securities, or locate a recognized region on the globe.
 
 Watchlists persist in your browser. Quotes refresh every minute; news refreshes every three minutes while the market desk is visible. Charts support 1D, 5D, 1MO, 6MO and 1Y, with pointer inspection. SPY, QQQ and DIA are ETFs, not the underlying index levels.
+
+### Command line
+
+Press `/` to focus the command line. Up/down recalls recent commands. `HELP` opens the full reference.
+Type a company name to fetch symbol suggestions, including exchange labels, then choose the intended security. Ticker symbols can also be entered directly.
+
+```text
+GP NVDA 6mo                         Historical price chart
+NEWS Houston refinery fire          Search recent reporting
+COMPARE NVDA AAPL TSLA               Common-date price performance
+GEO NVDA                            Curated geographic footprint
+INV AAPL                            Geographic evidence tour
+ANALYST Why is NVIDIA exposed to Taiwan?
+BRIEF NVDA                          Export a combined research dossier
+BOOK                                Saved research library
+STATUS                              Source health
+```
+
+![MarketEye quote monitor and comparative price chart](docs/images/market-monitor.png)
+
+### News and research notebook
+
+The newsroom accepts up to 100 returned headlines per search, filters by text, publisher and publication age, and supports saved searches. Use `☆` to retain a story, select it to add your notes, and open **Saved stories** to revisit your research. Notes remain user-authored and separate from provider facts. The library supports up to 200 stories within a portable size limit.
+
+**Backup JSON** exports the complete library; **Import** merges a backup by story URL. **Export MD** exports the currently filtered research. The data lives in this browser on this computer—back it up before clearing browser storage or moving computers. Command history and watchlists are also local. Browser storage failures are reported; unreadable research is preserved for recovery rather than overwritten.
+
+![Saved research with personal notes](docs/images/research-notebook.png)
+
+**US alerts** loads active National Weather Service alerts with Severe or Extreme CAP severity. The detail pane retains forecast certainty, urgency, onset, expiry and original alert text. It does not treat a flood watch as observed damage. Some alerts have no published polygon and therefore no map point. Published polygon centers are approximate reference points, not incident coordinates. Official alerts are separate from the existing model-weather exposure score.
+
+For recognized regions in news, MarketEye screens the three curated company footprints within 250 km, excludes context-only infrastructure, and links the underlying relationship sources. A location match does not verify a closure, shipment allocation, revenue loss or price driver.
+
+`BRIEF NVDA` retrieves a quote, news and curated geographic evidence and exports one timestamped Markdown dossier. It preserves unavailable/stale states and keeps possible transmission channels separate from source facts.
 
 ![Gasoline research and selected news report](docs/images/energy-terminal.png)
 
@@ -69,6 +106,9 @@ The replay evaluates a historical event against the **current curated footprint*
 - Public stock, ETF, commodity futures and Bitcoin quotes with timestamps, session comparisons and historical charts.
 - Persistent custom watchlist, searchable news, publisher links, energy research and incident triage.
 - Local desktop-style launcher and keyboard function-key navigation.
+- Persistent research notes, saved searches, JSON backup/import and Markdown dossiers.
+- Sortable market monitor, quote CSV export and common-date price comparisons (not dividend-adjusted total returns).
+- Official NWS alerts and regional news-to-company footprint screening, without adding inferred incidents to the risk score.
 - NVIDIA, Apple and Tesla search and watchlist selection.
 - A distinct terminal interface with source evidence, company assets and geographic dependency paths.
 - Keyless satellite imagery, street-map fallback, camera navigation and optional photorealistic 3D.
@@ -114,6 +154,7 @@ These are **transparent screening heuristics**, not statistically calibrated pro
 | Tesla official factory pages and investor update | Factory footprint | No inferred utilization, capacity shares or current model mix |
 | [USGS](https://earthquake.usgs.gov/earthquakes/feed/v1.0/geojson.php) | M2.5+ events from the last 24 hours | Proximity does not establish damage or shutdown |
 | [Open-Meteo](https://open-meteo.com/en/docs) | Current model-estimated weather at mapped campuses | Not an official weather alert or a facility observation |
+| [National Weather Service API](https://www.weather.gov/documentation/services-web-api) | Active US Severe/Extreme alerts, certainty, onset and expiry | Forecasts/watches are not operational-status confirmation; not exhaustive global hazard coverage |
 | Taiwan port and airport operators | Nearby infrastructure | No verified NVIDIA shipment attribution |
 
 Every curated asset and supplier relationship links to a public source. Source retrieval status and event timestamps remain separate. Provider requests are bounded, retried once, coalesced and cached for five minutes; a failed refresh preserves the last successful in-session snapshot as stale. No successful snapshot means unavailable.
@@ -150,8 +191,9 @@ src/impact/           Explicit evidence graph
 src/analyst/          Tool contracts, investigation planner and brief
 src/globe/            MarketEye presentation over upstream Cesium infrastructure
 src/markets/          Quote normalization, instruments, headline triage and tests
-src/ui/              Terminal styles and browser tool registration
-server/              Market/news proxy and optional analyst endpoint
+src/research/         Validated local library, regional links and combined dossiers
+src/ui/               Terminal, newsroom, monitor and browser tool registration
+server/               Market/news/NWS proxy and optional analyst endpoint
 src/marketeye.js      Application state and UI orchestration
 ```
 

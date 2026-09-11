@@ -95,7 +95,7 @@ export class MarketMonitor {
     return [...quotes.entries()].map(([symbol, q]) => ({
       ...q,
       symbol,
-      name: resolveInstrument(symbol)?.name || symbol,
+      name: q.name || resolveInstrument(symbol)?.name || symbol,
     }));
   }
   render() {

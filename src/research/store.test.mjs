@@ -21,6 +21,18 @@ const memory = () => {
     },
   };
 };
+test("corrupt research is preserved for backup until an explicit repaired import", () => {
+  let raw = "{broken";
+  const store = new ResearchStore({
+    getItem: () => raw,
+    setItem: (_, value) => (raw = value),
+  });
+  assert.throws(() => store.save(story));
+  assert.equal(raw, "{broken");
+  assert.equal(store.export(), "{broken");
+  store.import(JSON.stringify({ version: 1, stories: [], searches: [] }));
+  assert.equal(JSON.parse(raw).version, 1);
+});
 test("research survives reload and saving a story preserves notes", () => {
   const disk = memory(),
     store = new ResearchStore(disk);

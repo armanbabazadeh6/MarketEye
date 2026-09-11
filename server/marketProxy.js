@@ -59,7 +59,7 @@ export function marketProxy({
       try {
         const response = await fetcher(url, {
           headers: {
-            "User-Agent": "MarketEye/0.2 (personal research terminal)",
+            "User-Agent": "MarketEye/0.3 (personal research terminal)",
             ...extraHeaders,
           },
           signal: AbortSignal.timeout(10000),
@@ -78,7 +78,7 @@ export function marketProxy({
   const install = (middlewares) => {
     middlewares.use("/api/marketeye/health", (_req, res) => {
       res.setHeader("Content-Type", "application/json");
-      res.end(JSON.stringify({ app: "marketeye", version: "0.2.0" }));
+      res.end(JSON.stringify({ app: "marketeye", version: "0.3.0" }));
     });
     middlewares.use("/api/marketeye/market", async (req, res) => {
       const reply = (status, data) => {
@@ -172,6 +172,42 @@ export function marketProxy({
               "Active US alerts with Severe or Extreme CAP severity. A watch or forecast alert is not confirmed facility damage.",
           }),
           120000,
+        );
+        return reply(200, result);
+      }
+      if (kind === "search") {
+        const q = (url.searchParams.get("q") || "").trim();
+        if (!q || q.length > 80)
+          return reply(400, { error: "Search must contain 1–80 characters" });
+        const result = await cached(
+          "symbols:" + q.toLowerCase(),
+          async () => {
+            const payload = JSON.parse(
+              await request(
+                "https://query1.finance.yahoo.com/v1/finance/search?" +
+                  new URLSearchParams({ q, quotesCount: "8", newsCount: "0" }),
+              ),
+            );
+            return {
+              matches: (payload.quotes || [])
+                .filter(
+                  (r) =>
+                    typeof r.symbol === "string" &&
+                    /^[A-Z0-9^][A-Z0-9.^=-]{0,14}$/.test(r.symbol),
+                )
+                .slice(0, 8)
+                .map((r) => ({
+                  symbol: r.symbol,
+                  name: String(r.shortname || r.longname || r.symbol).slice(
+                    0,
+                    200,
+                  ),
+                  exchange: String(r.exchDisp || r.exchange || "").slice(0, 60),
+                  type: String(r.quoteType || "").slice(0, 30),
+                })),
+            };
+          },
+          3600000,
         );
         return reply(200, result);
       }

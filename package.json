@@ -1,7 +1,7 @@
 {
   "name": "marketeye",
   "private": true,
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "A personal market terminal connecting stock and commodity prices, news, and physical-world intelligence.",
   "type": "module",
   "license": "MIT",
@@ -41,10 +41,12 @@
     "test": "node scripts/run-unit-tests.mjs",
     "test:track": "node scripts/track-regression.mjs",
     "qa:map-source-tray": "node scripts/qa-map-source-tray.mjs",
-    "test:marketeye": "node --test src/exposure/engine.test.mjs src/events/normalize.test.mjs src/providers/worldEvents.test.mjs src/analyst/analyst.test.mjs src/analyst/proxy.test.mjs src/markets/markets.test.mjs",
+    "test:marketeye": "node --test src/exposure/engine.test.mjs src/events/normalize.test.mjs src/events/officialAlerts.test.mjs src/providers/worldEvents.test.mjs src/analyst/analyst.test.mjs src/analyst/proxy.test.mjs src/markets/markets.test.mjs src/markets/client.test.mjs src/markets/terminalCommands.test.mjs src/research/store.test.mjs src/research/dossier.test.mjs",
     "qa:marketeye": "node scripts/qa-marketeye.mjs",
     "start": "node scripts/launch-marketeye.mjs",
-    "qa:terminal": "node scripts/qa-terminal.mjs"
+    "qa:terminal": "node scripts/qa-terminal.mjs",
+    "qa:research": "node scripts/qa-research.mjs",
+    "qa:integrated": "node scripts/qa-integrated.mjs"
   },
   "dependencies": {
     "@mapbox/vector-tile": "^3.0.0",

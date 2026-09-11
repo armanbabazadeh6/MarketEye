@@ -77,15 +77,22 @@ export class ResearchStore {
     this.storage = storage;
     this.data = { version: 1, stories: [], searches: [] };
     this.error = null;
+    this.recoveryRaw = null;
     try {
       const raw = storage.getItem(RESEARCH_KEY);
+      this.recoveryRaw = raw;
       if (raw) this.data = parseResearch(raw);
+      this.recoveryRaw = null;
     } catch {
       this.error =
         "Local research could not be loaded. Export a backup before making changes.";
     }
   }
   commit(next) {
+    if (this.recoveryRaw !== null)
+      throw Error(
+        "Existing research could not be read. Use Backup JSON to preserve it, then import a repaired backup.",
+      );
     const encoded = JSON.stringify(next);
     if (new TextEncoder().encode(encoded).length > 1900000)
       throw Error(
@@ -140,16 +147,23 @@ export class ResearchStore {
       ];
     if (merged.length > 200)
       throw Error("Combined library exceeds 200 stories");
-    this.commit({
-      version: 1,
-      stories: merged,
-      searches: [
-        ...new Set([...incoming.searches, ...this.data.searches]),
-      ].slice(0, 12),
-    });
+    const original = this.recoveryRaw;
+    this.recoveryRaw = null;
+    try {
+      this.commit({
+        version: 1,
+        stories: merged,
+        searches: [
+          ...new Set([...incoming.searches, ...this.data.searches]),
+        ].slice(0, 12),
+      });
+    } catch (error) {
+      this.recoveryRaw = original;
+      throw error;
+    }
   }
   export() {
-    return JSON.stringify(this.data, null, 2);
+    return this.recoveryRaw ?? JSON.stringify(this.data, null, 2);
   }
 }
 export function filterStories(

@@ -1,6 +1,20 @@
 // Headline triage, never a claim that correlation proves causation.
 const channels = [
   {
+    id: "weather",
+    label: "Weather & operating conditions",
+    pattern:
+      /flood|hurricane|typhoon|tornado|storm|blizzard|extreme heat|red flag warning/i,
+    path: [
+      "Official hazard / forecast or weather report",
+      "Potential operating or transport constraints",
+      "Delivery timing and input costs",
+    ],
+    symbols: ["CL=F", "NG=F", "XOM", "CVX", "DAL", "FDX"],
+    explanation:
+      "An alert describes a hazard or forecast, not confirmed facility damage. Compare its timing and coverage with operator notices before inferring disruption.",
+  },
+  {
     id: "refining",
     label: "Refining & fuel supply",
     pattern: /refiner|refined products|gasoline|diesel|fuel shortage/i,
