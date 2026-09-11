@@ -13,20 +13,20 @@ export async function executeTool(call,context) {
   if(!TOOL_NAMES.includes(call.name))throw new Error('Unsupported analyst tool');
   const company=context.companies.find(c=>c.ticker===call.arguments?.ticker);
   if(!company)throw new Error('Unsupported company');
-  const assessment=assessCompany(company,context.snapshot.events);
+  const assessment=assessCompany(company,context.snapshot.events,context.snapshot.analysisTime||Date.now());
   switch(call.name){
-    case 'getCompanyExposure':return {company:company.ticker,thesis:company.thesis,assessment,unknowns:company.unknowns,sources:context.snapshot.sources};
+    case 'getCompanyExposure':return {company:company.ticker,mode:context.snapshot.mode||'live',thesis:company.thesis,assessment,unknowns:company.unknowns,sources:context.snapshot.sources};
     case 'getCompanyLocations':return company.locations;
     case 'getSuppliers':return company.suppliers.length?company.suppliers:{message:'No verified supplier records in this curated dataset.'};
     case 'getNearbyEvents':return {events:assessment.exposures.map(e=>({event:context.snapshot.events.find(x=>x.id===e.eventId),exposure:e})),coverage:context.snapshot.sources};
-    case 'compareCompanies':return context.companies.map(c=>({ticker:c.ticker,score:assessCompany(c,context.snapshot.events).score,thesis:c.thesis,warning:'Same available snapshot; weather coverage may differ by company. Not a revenue-weighted ranking.'}));
+    case 'compareCompanies':return context.companies.map(c=>({ticker:c.ticker,score:assessCompany(c,context.snapshot.events,context.snapshot.analysisTime||Date.now()).score,thesis:c.thesis,warning:`${context.snapshot.mode==='replay'?'Historical replay applied to current curated footprint. ':''}Same available snapshot; weather coverage may differ by company. Not a revenue-weighted ranking.`}));
     case 'showCompanyAssets':return {success:await context.showCompany(company.ticker)};
     case 'investigateEvent':return {success:await context.investigate(company.ticker)};
     case 'generateCompanyBrief':return generateBrief(company,assessment,context.snapshot);
   }
 }
 export function summarizeTool(name,result) {
-  if(name==='getCompanyExposure')return `${result.thesis}\n\nScreening score: ${result.assessment.score}/100 (available evidence only). ${result.assessment.exposures[0]?.explanation||'No correlated event in the available snapshot.'}\n\nUnknown: ${result.unknowns.join('; ')}.\nSources: ${result.sources.map(s=>`${s.key} (${s.status})`).join(', ')}.`;
+  if(name==='getCompanyExposure')return `${result.mode==='replay'?'HISTORICAL REPLAY · April 2024 event × current curated footprint.\n\n':''}${result.thesis}\n\nScreening score: ${result.sources.some(s=>['ready','cached'].includes(s.status))?`${result.assessment.score}/100 (available evidence only)`:'unavailable or stale coverage'}. ${result.assessment.exposures[0]?.explanation||'No correlated event in the available snapshot.'}\n\nUnknown: ${result.unknowns.join('; ')}.\nSources: ${result.sources.map(s=>`${s.key} (${s.status})`).join(', ')}.`;
   if(name==='compareCompanies')return result.map(c=>`${c.ticker}: ${c.score}/100 — ${c.thesis}`).join('\n\n')+'\n\n'+result[0].warning;
   if(name==='getCompanyLocations')return result.map(l=>`${l.name} — ${l.relationship}. ${l.description}\n${l.sourceUrl}`).join('\n\n');
   if(name==='getSuppliers')return Array.isArray(result)?result.map(s=>`${s.name}: ${s.statement}\n${s.sourceUrl}`).join('\n\n'):result.message;

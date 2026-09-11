@@ -2,6 +2,7 @@ import { severityLabel } from '../exposure/engine.js';
 export function generateBrief(company,assessment,snapshot) {
   const lead=assessment.exposures[0];
   return [`# ${company.name} Geographic Exposure Brief`,`As of ${assessment.calculatedAt} · model ${assessment.modelVersion}`,
+    ...(snapshot.mode==='replay'?['HISTORICAL REPLAY: April 2024 earthquake applied to the current curated company footprint. Not a contemporaneous reconstruction or a claim of realized financial loss.']:[]),
     `## Current screening exposure\n${snapshot.sources.some(s=>s.status==='ready'||s.status==='cached')?`${assessment.score}/100 · ${severityLabel(assessment.score).toUpperCase()}`:'UNAVAILABLE — insufficient source coverage'}`,
     'A screening score is not a probability of disruption, a price forecast, or a revenue estimate.',
     `## Structural dependency\n${company.thesis}`,

@@ -1,3 +1,4 @@
+// Legacy UI fixture; MarketEye browser flows are covered by scripts/qa-marketeye.mjs.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -196,7 +197,7 @@ test('replacement, repetition, and hidden-tab elapsed time use the newest fixed 
 
 test('universal notice lifecycle clears on dispose and uses the one top-center live region', () => {
   const ui = readFileSync(new URL('./ui.js', import.meta.url), 'utf8');
-  const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
+  const html = readFileSync(new URL('../docs/upstream-index.html', import.meta.url), 'utf8');
   const disposeStart = ui.indexOf('  async dispose() {');
   const disposeEnd = ui.indexOf('\n  }\n', disposeStart);
   const dispose = ui.slice(disposeStart, disposeEnd);

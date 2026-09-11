@@ -1,6 +1,6 @@
 import { normalizeUsgs,normalizeWeather,USGS_URL } from '../events/normalize.js';
 export class WorldEventProvider {
-  constructor({fetcher=fetch,now=Date.now}={}){this.fetcher=fetcher;this.now=now;this.cache=new Map();this.inflight=new Map();}
+  constructor({fetcher=(...args)=>globalThis.fetch(...args),now=Date.now}={}){this.fetcher=fetcher;this.now=now;this.cache=new Map();this.inflight=new Map();}
   async load(key,url,normalize,{force=false}={}) {
     const prior=this.cache.get(key);
     if(!force&&prior&&this.now()-prior.retrievedMs<300000)return {...prior,status:prior.status==='stale'?'stale':'cached'};

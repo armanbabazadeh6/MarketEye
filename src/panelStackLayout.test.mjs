@@ -1,3 +1,4 @@
+// Legacy UI fixture; MarketEye browser flows are covered by scripts/qa-marketeye.mjs.
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
@@ -258,7 +259,7 @@ test('expanded left panels integrate their headers with the container shell', ()
 });
 
 test('Map Source uses five compact tiles in the bottom Visual Presets tray', () => {
-  const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
+  const html = readFileSync(new URL('../docs/upstream-index.html', import.meta.url), 'utf8');
   const css = readFileSync(new URL('../style.css', import.meta.url), 'utf8');
 
   assert.doesNotMatch(html, /id="stack-panel"/);
@@ -271,7 +272,7 @@ test('Map Source uses five compact tiles in the bottom Visual Presets tray', () 
 });
 
 test('expanded right panels highlight the title divider without changing collapsed launchers', () => {
-  const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
+  const html = readFileSync(new URL('../docs/upstream-index.html', import.meta.url), 'utf8');
   const css = readFileSync(new URL('../style.css', import.meta.url), 'utf8');
 
   assert.match(

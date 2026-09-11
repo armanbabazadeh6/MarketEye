@@ -1,0 +1,27 @@
+{
+  "type": "FeatureCollection",
+  "source": "USGS ComCat",
+  "retrievedAt": "2026-09-11T15:46:34.054Z",
+  "sourceUrl": "https://earthquake.usgs.gov/earthquakes/feed/v1.0/detail/us7000m9g4.geojson",
+  "features": [
+    {
+      "type": "Feature",
+      "id": "us7000m9g4",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          121.5976,
+          23.8356,
+          40
+        ]
+      },
+      "properties": {
+        "mag": 7.4,
+        "place": "15 km S of Hualien City, Taiwan",
+        "time": 1712102292173,
+        "url": "https://earthquake.usgs.gov/earthquakes/eventpage/us7000m9g4",
+        "updated": 1782384872203
+      }
+    }
+  ]
+}

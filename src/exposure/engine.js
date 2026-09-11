@@ -14,6 +14,7 @@ export function freshness(timestamp,now=Date.now(),halfLifeHours=24) {
 }
 export const severityLabel=score=>score>=75?'critical':score>=50?'high':score>=25?'medium':'low';
 export function correlateEvent(company,event,now=Date.now()) {
+  if(!Number.isFinite(event.severity)||event.severity<=0)return null;
   if(!Number.isFinite(event.radiusKm)||event.radiusKm<=0)return null;
   const age=freshness(event.timestamp,now,event.type==='weather'?6:24);
   const rows=company.locations.filter(l=>l.relationship!=='context-only').map(location=>{

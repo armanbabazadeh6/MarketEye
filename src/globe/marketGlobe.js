@@ -3,6 +3,7 @@ import { MapStackController } from '../mapStackController.js';
 import { installRenderGovernor } from '../renderGovernor.js';
 import { registerDataCredits } from '../data/dataCredits.js';
 import { configureCreditKeyboardAccess } from '../creditKeyboard.js';
+import { loadPhotorealisticTileset } from '../mapStartup.js';
 
 export async function createMarketGlobe(onSelect, onStatus) {
   Cesium.Ion.defaultAccessToken = import.meta.env.CESIUM_ION_TOKEN || '';
@@ -68,6 +69,11 @@ export async function createMarketGlobe(onSelect, onStatus) {
     viewer.scene.requestRender();
   }
   return {viewer,maps,flyTo,showCompany,showEvents,
+    async enablePhotorealistic(){
+      const {tileset,errors}=await loadPhotorealisticTileset(Cesium,{googleApiKey:import.meta.env.GOOGLE_MAPS_API_KEY,cesiumToken:import.meta.env.CESIUM_ION_TOKEN});
+      if(!tileset)throw new Error(errors[0]?.message||'Set a Google Maps API key or Cesium ion token in .env, then restart.');
+      viewer.scene.primitives.add(tileset);maps.googleTileset=tileset;return maps.setStack('photoreal');
+    },
     toggle:(name,visible)=>{({assets,paths,signals})[name].show=visible;viewer.scene.requestRender();},
     highlight:location=>{viewer.selectedEntity=assets.entities.getById(location.id);return flyTo(location);},
     connect:(event,location)=>{paths.entities.add({polyline:{positions:[position(event),position(location)],width:3,material:Cesium.Color.fromCssColorString('#f1ad69')}});viewer.scene.requestRender();},

@@ -6,6 +6,10 @@ import { buildImpactGraph } from './impact/graph.js';
 import { generateBrief } from './analyst/brief.js';
 import { planLocally, executeTool, summarizeTool } from './analyst/tools.js';
 import { planInvestigation, runInvestigation } from './analyst/investigation.js';
+import { attachContextLayers } from './globe/contextLayers.js';
+import { normalizeUsgs } from './events/normalize.js';
+import taiwanReplay from '../data/events/taiwan-2024.json';
+import { registerMarketTools } from './ui/webmcp.js';
 import './ui/terminal.css';
 const $=id=>document.getElementById(id);
 const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -14,6 +18,7 @@ const provider=new WorldEventProvider();
 let snapshot={sources:[],events:[]},assessment=assessCompany(selected,[]),requestGeneration=0;
 let investigationController=null,investigationSteps=[],investigationStatus='',selectedEvent=null;
 let aiAvailable=false,chatHistory=[],chatBusy=false;
+let dataMode='live',contextLayers=null;
 $('app').innerHTML=`
 <header class="app-header"><div class="brand"><img src="/marketeye.svg" alt=""/>Market<span>Eye</span></div><div class="nav-label">Intelligence workspace</div><div class="search"><label class="sr-only" for="company-search">Search company or ticker</label><input id="company-search" placeholder="Search company or ticker…" autocomplete="off"/><div id="search-results" class="search-results"></div></div><div class="header-meta mono">PHYSICAL-WORLD INTELLIGENCE</div></header>
 <main class="workspace"><aside class="left-rail" aria-label="Watchlist and signals"><section class="rail-section"><div class="section-title"><span class="eyebrow">Watchlist</span><span class="count">03</span></div><div id="watchlist"></div></section><section class="rail-section"><div class="section-title"><span class="eyebrow">World signals</span><span id="signal-count" class="count">—</span></div><div id="signals"><p class="empty">Connecting to public event sources…</p></div><button id="refresh" class="secondary">↻ Refresh sources</button></section><section class="rail-section"><div class="section-title"><span class="eyebrow">Map layers</span></div><label class="layer"><input type="checkbox" data-layer="assets" checked/> Company footprint</label><label class="layer"><input type="checkbox" data-layer="paths" checked/> Dependency paths</label><label class="layer"><input type="checkbox" data-layer="signals" checked/> World events</label><div id="extra-layers"></div></section><section class="rail-section"><div class="eyebrow">Evidence, before inference</div><p class="empty">Physical proximity identifies potential exposure. It does not confirm disruption.</p><button id="methodology" class="secondary">Scoring & methodology ↗</button></section></aside>
@@ -55,12 +60,12 @@ function renderPath(event,exposure){
   $('impact-chain').innerHTML=graph.nodes.map((n,i)=>`<div class="impact-node"><small>${esc(n.type)}</small>${esc(n.label)}</div>${i<graph.nodes.length-1?`<span class="arrow" title="${esc(graph.edges[i].type)}">→</span>`:''}`).join('');
 }
 function renderIntelligence(){
-  assessment=assessCompany(selected,snapshot.events);
+  assessment=assessCompany(selected,snapshot.events,snapshot.analysisTime||Date.now());
   const usable=snapshot.sources.some(s=>s.status==='ready'||s.status==='cached');
   const stale=snapshot.sources.some(s=>s.status==='stale');
   const lead=assessment.exposures[0];
   $('score').innerHTML=`${usable||stale?assessment.score:'—'} <span>/ 100</span>`;
-  $('score-badge').textContent=usable?severityLabel(assessment.score).toUpperCase():stale?'STALE EVIDENCE':snapshot.sources.length?'UNAVAILABLE':'CONNECTING';
+  $('score-badge').textContent=dataMode==='replay'?`${severityLabel(assessment.score).toUpperCase()} · REPLAY`:usable?severityLabel(assessment.score).toUpperCase():stale?'STALE EVIDENCE':snapshot.sources.length?'UNAVAILABLE':'CONNECTING';
   $('score-meter').style.width=`${usable||stale?assessment.score:0}%`;
   $('score-explanation').textContent=lead?`${lead.distanceKm} km from ${lead.rows[0].location.name}. ${snapshot.sources.some(s=>!['ready','cached'].includes(s.status))?'Partial or stale coverage. ':''}Potential exposure; disruption unconfirmed.`:usable?'No event intersects the mapped footprint within screening radii. This does not establish safe operations.':'Awaiting usable coverage. Unknown does not mean low risk.';
   const relatedIds=new Set(assessment.exposures.map(e=>e.eventId));
@@ -68,14 +73,20 @@ function renderIntelligence(){
   $('signal-count').textContent=String(snapshot.events.length);
   $('signals').innerHTML=ranked.slice(0,5).map(e=>`<button class="signal" data-event="${esc(e.id)}"><span class="eyebrow">${e.type} · ${e.stale?'STALE':e.evidenceType==='model-estimate'?'MODEL ESTIMATE':'OBSERVED'}</span><strong>${esc(e.title)}</strong><small>${e.source} · ${new Date(e.timestamp).toLocaleString([], {month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})}${relatedIds.has(e.id)?' · Near footprint':''}</small></button>`).join('')||'<p class="empty">No usable events in this snapshot. Check source coverage below.</p>';
   document.querySelectorAll('[data-event]').forEach(b=>b.onclick=()=>selectEvent(snapshot.events.find(e=>e.id===b.dataset.event)));
-  $('source-status').textContent=snapshot.sources.length?`${snapshot.sources.filter(s=>['ready','cached'].includes(s.status)).length}/${snapshot.sources.length} sources available${stale?' · stale evidence':''}`:'Sources connecting';
+  $('source-status').textContent=dataMode==='replay'?'HISTORICAL REPLAY · 03 APR 2024 TAIWAN':snapshot.sources.length?`${snapshot.sources.filter(s=>['ready','cached'].includes(s.status)).length}/${snapshot.sources.length} sources available${stale?' · stale evidence':''}`:'Sources connecting';
   $('source-status').title=snapshot.sources.map(s=>`${s.key}: ${s.status} ${s.retrievedAt||''} ${s.error||''}`).join('\n');
   if(lead)renderPath(snapshot.events.find(e=>e.id===lead.eventId),lead);
+  else {$('impact-status').textContent='STRUCTURAL DEPENDENCY';$('impact-chain').innerHTML=[['Region',selected.regions[0].name],['Dependency',selected.dependencies[0].name],['Company',selected.name]].map(([type,label])=>`<div class="impact-node"><small>${type}</small>${esc(label)}</div>`).join('<span class="arrow">→</span>');}
   globe?.showEvents(snapshot.events.filter(e=>e.severity>0));
   if(activeTab==='evidence')renderTab();
 }
 async function refreshSources(force=false){
   const generation=++requestGeneration,company=selected;
+  if(dataMode==='replay'){
+    const events=normalizeUsgs(taiwanReplay).map(e=>({...e,evidenceType:'historical observation'}));
+    snapshot={events,analysisTime:Date.parse(events[0].timestamp)+3600000,mode:'replay',sources:[{key:'USGS historical archive',status:'ready',retrievedAt:taiwanReplay.retrievedAt}]};
+    renderIntelligence();$('refresh').disabled=false;$('refresh').textContent='↻ Refresh sources';return;
+  }
   $('refresh').disabled=true;$('refresh').textContent='Refreshing…';
   try{const result=await provider.refresh(company,{force});if(generation!==requestGeneration)return;snapshot=result;renderIntelligence();}
   catch(error){if(generation===requestGeneration)$('source-status').textContent=`Sources unavailable: ${error.message}`;}
@@ -87,19 +98,19 @@ function selectEvent(event){
   if(exposure){renderPath(event,exposure);globe?.connect(event,exposure.rows[0].location);}
   showDialog(event.title,`<span class="badge">${esc(event.evidenceType)}${event.stale?' · STALE':''}</span><p style="margin-top:18px">${esc(event.description)}</p><p class="muted">${esc(event.timestamp)} · ${event.radiusKm} km heuristic screening radius</p>${exposure?`<h3>Why ${exposure.score} / 100?</h3><p>${esc(exposure.explanation)}</p><div class="factor-grid">${Object.entries(exposure.factors).map(([k,v])=>`<div><small>${k}</small><strong>${v.toFixed(2)}</strong></div>`).join('')}</div><h3>Affected asset candidates</h3>${exposure.rows.map(r=>`<p>${esc(r.location.name)} · ${r.distanceKm} km · ${r.score}/100</p>`).join('')}<p class="notice">${exposure.unknowns.map(esc).join(' ')}</p>`:'<p>No mapped company asset intersects this event’s screening radius.</p>'}<a href="${esc(event.sourceUrl)}" target="_blank" rel="noopener noreferrer">${esc(event.source)} ↗</a>`);
 }
-function cancelInvestigation(){investigationController?.abort();investigationController=null;globe?.viewer.camera.cancelFlight();}
+function cancelInvestigation(){investigationController?.abort();investigationController=null;globe?.viewer.camera.cancelFlight();$('investigation-panel')?.remove();$('investigate').textContent='Investigate exposure ↗';$('investigate').onclick=()=>void investigate();}
 async function investigate(ticker=selected.ticker){
   if(ticker!==selected.ticker)selectCompany(ticker);
   if(!globe){showDialog('Globe unavailable','<p>Investigation tours require WebGL. Evidence and brief export remain available.</p>');return false;}
   cancelInvestigation();const controller=new AbortController();investigationController=controller;
   // Snapshot evidence once: updates cannot rewrite an investigation mid-tour.
-  const company=selected, evidence=structuredClone(snapshot), analysis=assessCompany(company,evidence.events);
+  const company=selected, evidence=structuredClone(snapshot), analysis=assessCompany(company,evidence.events,evidence.analysisTime||Date.now());
   investigationSteps=planInvestigation(company,analysis,evidence.events).map(s=>({...s,status:'pending'}));
   investigationStatus='Investigation in progress';renderInvestigation();
   $('investigate').textContent='■ Stop investigation';$('investigate').onclick=()=>{cancelInvestigation();investigationStatus='Investigation stopped';renderInvestigation();};
   const ok=await runInvestigation(investigationSteps,{signal:controller.signal,flyTo:location=>globe.flyTo(location,800000,window.matchMedia('(prefers-reduced-motion: reduce)').matches?0:1.5),
     onStep:(index,status,step)=>{investigationSteps[index].status=status;if(step.event&&step.location&&step.event.id!==step.location.id)globe.connect(step.event,step.location);renderInvestigation();}});
-  if(selected===company){investigationStatus=ok?'Assessment complete':'Investigation stopped';renderInvestigation();$('investigate').textContent='Investigate exposure ↗';$('investigate').onclick=()=>void investigate();
+  if(selected===company&&investigationController===controller){investigationStatus=ok?'Assessment complete':'Investigation stopped';renderInvestigation();$('investigate').textContent='Investigate exposure ↗';$('investigate').onclick=()=>void investigate();
     if(ok){$('investigation-brief').hidden=false;$('investigation-brief').onclick=()=>showDialog(`${company.name} intelligence brief`,`<pre>${esc(generateBrief(company,analysis,evidence))}</pre>`);}}
   if(investigationController===controller)investigationController=null;
   return ok;
@@ -120,7 +131,7 @@ async function askAnalyst(question){
     let call=planLocally(question,selected.ticker,companies),mode='Local tool';
     if(aiAvailable){try{const response=await fetch('/api/marketeye/analyst',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({question,ticker:selected.ticker,context:{selectedEvent,activeLayers:[...document.querySelectorAll('[data-layer]:checked')].map(c=>c.dataset.layer),exposure:assessment.score,sources:snapshot.sources}}),signal:AbortSignal.timeout(30000)});if(!response.ok)throw new Error('AI unavailable');call=await response.json();mode='AI-selected tool';}catch{mode='AI unavailable · local fallback';}}
     if(selected!==company)return;
-    const result=await executeTool(call,{companies,snapshot,showCompany:async ticker=>{selectCompany(ticker);return globe?await globe.flyTo(selected.focus):false;},investigate});
+    const result=await executeTool(call,{companies,snapshot,showCompany:async ticker=>{if(ticker!==selected.ticker)selectCompany(ticker);globe?.showCompany(selected);return globe?await globe.flyTo(selected.focus):false;},investigate});
     chatHistory.push({role:`${mode} · ${call.name}`,text:summarizeTool(call.name,result)});
   }catch(error){chatHistory.push({role:'Tool failed',text:error.message});}
   finally{chatBusy=false;if(activeTab==='analyst')renderAnalyst();}
@@ -129,6 +140,12 @@ $('refresh').onclick=()=>void refreshSources(true);
 $('investigate').onclick=()=>void investigate();
 $('export-brief').onclick=()=>{const url=URL.createObjectURL(new Blob([generateBrief(selected,assessment,snapshot)],{type:'text/markdown'}));const a=document.createElement('a');a.href=url;a.download=`MarketEye-${selected.ticker}-${new Date().toISOString().slice(0,10)}.md`;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};
 $('methodology').onclick=()=>showDialog('How exposure is calculated',`<p>MarketEye ranks possible physical exposure using a deterministic, inspectable screening model. It does not estimate investment returns or the probability of a loss.</p><pre>100 × severity × proximity × importance\n    × confidence × freshness</pre><p>Proximity = max(0, 1 − distance / screening radius). Importance = 50% asset + 30% dependency + 20% supplier criticality. Confidence is the minimum of event, location and supplier confidence. These are curated screening weights, not statistically calibrated probabilities.</p><p>Freshness halves every 24 hours for earthquakes and 6 hours for weather. Company score is the largest asset-event score, avoiding duplicate-facility inflation. Context-only ports and airports do not contribute. Thresholds: low &lt;25, medium 25–49, high 50–74, critical ≥75.</p><p>Earthquake radius = magnitude² × 8 km, bounded to 50–700 km. Weather uses a 75 km screen. These radii are not hazard or damage boundaries. Weather is an Open-Meteo model estimate, not an official alert.</p><h3>Current source coverage</h3>${snapshot.sources.map(s=>`<p>${esc(s.key)} — ${esc(s.status)}<br/><small>${esc(s.retrievedAt||'No successful retrieval')} ${esc(s.error||'')}</small></p>`).join('')}`);
+const replayButton=document.createElement('button');replayButton.id='replay-toggle';replayButton.className='secondary';replayButton.textContent='↶ Explore Taiwan 2024 replay';$('refresh').after(replayButton);
+const modeNotice=document.createElement('div');modeNotice.className='mode-notice';modeNotice.hidden=true;modeNotice.id='replay-notice';modeNotice.textContent='HISTORICAL REPLAY · Apr 2024 earthquake × current curated footprint · Not live';document.querySelector('.globe-area').append(modeNotice);
+replayButton.onclick=()=>{cancelInvestigation();dataMode=dataMode==='live'?'replay':'live';modeNotice.hidden=dataMode!=='replay';replayButton.textContent=dataMode==='live'?'↶ Explore Taiwan 2024 replay':'● Return to live sources';globe?.showCompany(selected);void refreshSources();};
+const threeD=document.createElement('button');threeD.textContent='3D';threeD.title='Optional photorealistic imagery';document.querySelector('.globe-tools').append(threeD);threeD.onclick=async()=>{threeD.disabled=true;try{await globe?.enablePhotorealistic();}catch(error){showDialog('Photorealistic imagery',`<p>${esc(error.message)}</p>`);}finally{threeD.disabled=false;}};
+if(globe)contextLayers=attachContextLayers(globe,$('extra-layers'));
 void refreshSources();
 setInterval(()=>{if(!document.hidden&&!investigationController)void refreshSources();},300000);
 fetch('/api/marketeye/analyst').then(r=>r.json()).then(s=>{aiAvailable=s.available===true;if(activeTab==='analyst')renderAnalyst();}).catch(()=>{});
+registerMarketTools({getState:()=>({ticker:selected.ticker,mode:dataMode,score:assessment.score,sources:snapshot.sources,exposures:assessment.exposures.map(e=>({eventId:e.eventId,score:e.score,explanation:e.explanation}))}),selectCompany:async ticker=>{selectCompany(ticker);const moved=globe?await globe.flyTo(selected.focus):false;return {ticker:selected.ticker,moved};},investigate:async()=>({completed:await investigate()})});

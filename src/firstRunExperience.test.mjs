@@ -1,3 +1,4 @@
+// Legacy UI fixture; MarketEye browser flows are covered by scripts/qa-marketeye.mjs.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -545,7 +546,7 @@ test('the decision table is written down where the next editor will read it', ()
 // ── Markup, startup ordering, accessibility ─────────────────────────────────
 
 test('markup, startup ordering and accessibility remain pinned', () => {
-  const html = fs.readFileSync(new URL('../index.html', import.meta.url), 'utf8');
+  const html = fs.readFileSync(new URL('../docs/upstream-index.html', import.meta.url), 'utf8');
   const main = fs.readFileSync(new URL('./main.js', import.meta.url), 'utf8');
   const css = fs.readFileSync(new URL('../style.css', import.meta.url), 'utf8');
 

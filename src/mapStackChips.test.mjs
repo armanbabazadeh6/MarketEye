@@ -1,3 +1,4 @@
+// Legacy UI fixture; MarketEye browser flows are covered by scripts/qa-marketeye.mjs.
 // MAP STACK chip row — the dropdown's replacement control surface.
 //
 // The owner's complaint was two clicks (open panel → open dropdown) to change
@@ -328,7 +329,7 @@ test('the keyboard focus ring survives on the ACTIVE chip', () => {
 });
 
 test('the Visual Presets tray owns Map Source and the retired left panel is absent', () => {
-  const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
+  const html = readFileSync(new URL('../docs/upstream-index.html', import.meta.url), 'utf8');
   const ui = readFileSync(new URL('./ui.js', import.meta.url), 'utf8');
 
   assert.doesNotMatch(html, /map-stack-select/, 'the SOURCE dropdown is replaced by the chip row');

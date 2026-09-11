@@ -150,6 +150,9 @@ export function hardenCredentialFile(filepath, {
     ], {
       env: {
         ...environment,
+        // PowerShell 7 can pass a module path that prevents Windows PowerShell
+        // from loading its native Security module. Use the verified OS path.
+        PSModulePath: path.win32.join(path.win32.dirname(tools.powershell), 'Modules'),
         GEV_ACL_FILE: filepath,
         GEV_ACL_USER_SID: sid,
       },

@@ -1,3 +1,4 @@
+// Legacy UI fixture; MarketEye browser flows are covered by scripts/qa-marketeye.mjs.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
@@ -376,7 +377,7 @@ test('a fresh boot starts 3D aircraft ON in proximity — codec, both layers, an
     'ui.js: the DISPLAY rail believes 3D is on before any layer-state sync arrives');
   assert.match(ui, /this\._models3dMode = 'proximity';/,
     'ui.js: and believes the mode is proximity');
-  const html = await readFile(new URL('../../index.html', import.meta.url), 'utf8');
+  const html = await readFile(new URL('../../docs/upstream-index.html', import.meta.url), 'utf8');
   assert.match(html, /class="pp-toggle-btn active" id="models3d-toggle" aria-pressed="true"/,
     'index.html: the 3D button paints lit on first paint, before ui.js runs — and says so');
   assert.match(ui, /this\._models3dBtn\?\.setAttribute\('aria-pressed', String\(this\._models3dEnabled\)\)/,

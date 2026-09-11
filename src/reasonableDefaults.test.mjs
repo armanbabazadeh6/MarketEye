@@ -1,3 +1,4 @@
+// Legacy UI fixture; MarketEye browser flows are covered by scripts/qa-marketeye.mjs.
 // src/reasonableDefaults.test.mjs
 //
 // What the console looks like the FIRST time it opens — before any share link,
@@ -42,7 +43,7 @@ import {
 import { ShareLinkManager } from './sharelink.js';
 
 const uiSource = fs.readFileSync(new URL('./ui.js', import.meta.url), 'utf8');
-const indexHtml = fs.readFileSync(new URL('../index.html', import.meta.url), 'utf8');
+const indexHtml = fs.readFileSync(new URL('../docs/upstream-index.html', import.meta.url), 'utf8');
 const shareSource = fs.readFileSync(new URL('./sharelink.js', import.meta.url), 'utf8');
 
 /** Slice ui.js between two literal anchors, so a pin reads one method, not the file. */

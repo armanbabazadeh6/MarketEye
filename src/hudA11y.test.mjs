@@ -1,8 +1,9 @@
+// Legacy UI fixture; MarketEye browser flows are covered by scripts/qa-marketeye.mjs.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
-const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
+const html = readFileSync(new URL('../docs/upstream-index.html', import.meta.url), 'utf8');
 const ui = readFileSync(new URL('./ui.js', import.meta.url), 'utf8');
 
 // Focused markup guards; actual computed names are checked in Chromium.

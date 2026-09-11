@@ -1,3 +1,4 @@
+// Legacy UI fixture; MarketEye browser flows are covered by scripts/qa-marketeye.mjs.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -462,7 +463,7 @@ test('lifecycle is idempotent and teardown removes listeners, observers, and DOM
   assert.deepEqual(root.children, [canvas],
     'the overlay root carries only the shared card canvas');
   assert.doesNotMatch(
-    readFileSync(new URL('../../index.html', import.meta.url), 'utf8'),
+    readFileSync(new URL('../../docs/upstream-index.html', import.meta.url), 'utf8'),
     /world-overlay-detection-surface/,
     'the surface is runtime host-owned, not static markup',
   );
