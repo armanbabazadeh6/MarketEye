@@ -1,0 +1,14 @@
+{
+  "ticker":"TSLA","name":"Tesla","exchange":"NASDAQ","sector":"Automotive & energy","color":"#e7bba1",
+  "description":"An automotive and energy manufacturer with a multi-region factory footprint.",
+  "thesis":"Physical production spans the United States, China and Germany. Local hazards can intersect with manufacturing and delivery capacity.",
+  "focus":{"latitude":31,"longitude":121.8,"height":2800000},"reviewedAt":"2026-09-11","coordinatePolicy":"Approximate campus centers, not surveyed facility boundaries.",
+  "locations":[
+    {"id":"tesla-texas","name":"Gigafactory Texas","type":"factory","region":"United States","latitude":30.22,"longitude":-97.62,"importance":0.95,"confidence":0.95,"relationship":"confirmed","dependencyId":"production","source":"Tesla Giga Texas","sourceUrl":"https://www.tesla.com/giga-texas","description":"Tesla manufacturing campus near Austin."},
+    {"id":"tesla-shanghai","name":"Gigafactory Shanghai","type":"factory","region":"China","latitude":30.88,"longitude":121.77,"importance":0.95,"confidence":0.85,"relationship":"confirmed","dependencyId":"production","source":"Tesla Q4 2020 investor update (historical)","sourceUrl":"https://ir.tesla.com/_flysystem/s3/sec/000156459021002645/tsla-8k_20210127-gen.pdf","description":"Publicly documented vehicle manufacturing campus. Capacity and current model mix are not inferred from this historical source."},
+    {"id":"tesla-berlin","name":"Gigafactory Berlin-Brandenburg","type":"factory","region":"Germany","latitude":52.40,"longitude":13.79,"importance":0.85,"confidence":0.95,"relationship":"confirmed","dependencyId":"production","source":"Tesla Giga Berlin","sourceUrl":"https://www.tesla.com/de_de/giga-berlin","description":"Tesla manufacturing site in Germany."}
+  ],
+  "suppliers":[],"dependencies":[{"id":"production","name":"Vehicle manufacturing","importance":0.95,"potentialImpact":"A confirmed factory interruption could affect regional output and deliveries. Revenue effects require production and inventory evidence."}],
+  "regions":[{"name":"China","role":"Vehicle manufacturing","level":"Direct footprint"},{"name":"United States","role":"Vehicle manufacturing","level":"Direct footprint"},{"name":"Germany","role":"European manufacturing","level":"Direct footprint"}],
+  "unknowns":["Battery supplier facilities are not yet verified in this dataset","Current plant utilization and inventory","Actual disruption and delivery impacts"]
+}

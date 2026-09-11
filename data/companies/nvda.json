@@ -1,0 +1,18 @@
+{
+  "ticker": "NVDA", "name": "NVIDIA", "exchange": "NASDAQ", "sector": "Semiconductors", "color": "#b9ed87",
+  "description": "A fabless computing company with manufacturing dependencies across Asia.",
+  "thesis": "Designed in California. Dependent on a global semiconductor network, with a critical foundry relationship in Taiwan.",
+  "focus": {"latitude": 23.8, "longitude": 120.8, "height": 1600000},
+  "reviewedAt": "2026-09-11", "coordinatePolicy": "Approximate campus or regional centers, manually curated; not production-line coordinates.",
+  "locations": [
+    {"id":"nvda-hq","name":"NVIDIA · Santa Clara","type":"headquarters","region":"United States","latitude":37.37,"longitude":-121.96,"importance":0.7,"confidence":0.95,"relationship":"confirmed","source":"NVIDIA contact directory","sourceUrl":"https://www.nvidia.com/en-us/contact/","description":"Corporate headquarters. Approximate campus center."},
+    {"id":"tsmc-hsinchu","name":"TSMC · Hsinchu / Fab 12A","type":"supplier","region":"Taiwan","latitude":24.77,"longitude":121.01,"importance":1,"confidence":0.85,"relationship":"supplier-context","supplierId":"tsmc","dependencyId":"foundry","source":"TSMC fab directory","sourceUrl":"https://www.tsmc.com/english/aboutTSMC/TSMC_Fabs","description":"Public TSMC campus. NVIDIA is a TSMC customer; NVIDIA allocation to this specific fab is not established."},
+    {"id":"tsmc-tainan","name":"TSMC · Tainan / Fab 18","type":"supplier","region":"Taiwan","latitude":23.10,"longitude":120.27,"importance":1,"confidence":0.85,"relationship":"supplier-context","supplierId":"tsmc","dependencyId":"foundry","source":"TSMC fab directory","sourceUrl":"https://www.tsmc.com/english/aboutTSMC/TSMC_Fabs","description":"Public advanced-manufacturing campus. Product-specific NVIDIA capacity and allocation are unknown."},
+    {"id":"kaohsiung","name":"Port of Kaohsiung","type":"port","region":"Taiwan","latitude":22.60,"longitude":120.29,"importance":0.35,"confidence":0.65,"relationship":"context-only","source":"Taiwan International Ports Corporation","sourceUrl":"https://kh.twport.com.tw/en","description":"Regional logistics context. No verified NVIDIA shipment or route attribution."},
+    {"id":"taoyuan","name":"Taoyuan International Airport","type":"airport","region":"Taiwan","latitude":25.08,"longitude":121.23,"importance":0.35,"confidence":0.65,"relationship":"context-only","source":"Taoyuan International Airport","sourceUrl":"https://www.taoyuan-airport.com/explorethefun/en.html","description":"Regional air-cargo context. No verified NVIDIA shipment attribution."}
+  ],
+  "suppliers": [{"id":"tsmc","name":"TSMC","category":"semiconductor","criticality":1,"confidence":0.95,"locationIds":["tsmc-hsinchu","tsmc-tainan"],"source":"NVIDIA FY2025 sustainability report","sourceUrl":"https://images.nvidia.com/aem-dam/Solutions/documents/NVIDIA-Sustainability-Report-Fiscal-Year-2025.pdf","statement":"NVIDIA identifies TSMC and Samsung as wafer foundries. Exact fab allocation is not disclosed here."}],
+  "dependencies": [{"id":"foundry","name":"Outsourced semiconductor fabrication","importance":1,"supplierId":"tsmc","potentialImpact":"If supplier operations were disrupted, GPU availability and delivery schedules could be affected. No interruption is established by proximity alone."}],
+  "regions": [{"name":"Taiwan","role":"Foundry manufacturing","level":"Critical dependency"},{"name":"United States","role":"Headquarters and engineering","level":"Strategic footprint"}],
+  "unknowns": ["Product-level fab allocation and capacity shares","Actual facility interruptions and recovery times","Verified company-specific shipping and airport activity","Revenue sensitivity and inventory buffers"]
+}

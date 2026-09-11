@@ -1,0 +1,16 @@
+{
+  "ticker":"AAPL","name":"Apple","exchange":"NASDAQ","sector":"Consumer technology","color":"#adc6ff",
+  "description":"A global hardware and services company with an outsourced manufacturing network.",
+  "thesis":"A global supplier network connects California product design with semiconductor manufacturing in Taiwan.",
+  "focus":{"latitude":24.4,"longitude":120.8,"height":2100000},"reviewedAt":"2026-09-11",
+  "coordinatePolicy":"Approximate campus centers. Supplier relationship evidence is historical FY2022 and requires revalidation.",
+  "locations":[
+    {"id":"apple-hq","name":"Apple Park · Cupertino","type":"headquarters","region":"United States","latitude":37.33,"longitude":-122.01,"importance":0.7,"confidence":0.95,"relationship":"confirmed","source":"Apple contact directory","sourceUrl":"https://www.apple.com/contact/","description":"Apple corporate headquarters; approximate campus center."},
+    {"id":"tsmc-hsinchu","name":"TSMC · Hsinchu / Fab 12A","type":"supplier","region":"Taiwan","latitude":24.77,"longitude":121.01,"importance":0.9,"confidence":0.65,"relationship":"supplier-context","supplierId":"tsmc","dependencyId":"silicon","source":"TSMC fab directory","sourceUrl":"https://www.tsmc.com/english/aboutTSMC/TSMC_Fabs","description":"Supplier campus context; exact Apple fab allocation is not verified. Supplier link uses historical FY2022 evidence."},
+    {"id":"tsmc-tainan","name":"TSMC · Tainan / Fab 18","type":"supplier","region":"Taiwan","latitude":23.10,"longitude":120.27,"importance":0.9,"confidence":0.65,"relationship":"supplier-context","supplierId":"tsmc","dependencyId":"silicon","source":"TSMC fab directory","sourceUrl":"https://www.tsmc.com/english/aboutTSMC/TSMC_Fabs","description":"Supplier campus context, not a claim that any specific Apple chip is produced here."}
+  ],
+  "suppliers":[{"id":"tsmc","name":"TSMC","category":"semiconductor","criticality":0.95,"confidence":0.65,"locationIds":["tsmc-hsinchu","tsmc-tainan"],"source":"Apple Supplier List FY2022 (historical)","sourceUrl":"https://www.apple.com/tw/supplier-responsibility/pdf/Apple-Supplier-List.pdf","statement":"Historical supplier listing establishes a company-level relationship, not current volumes or fab allocation."}],
+  "dependencies":[{"id":"silicon","name":"Semiconductor manufacturing","importance":0.95,"supplierId":"tsmc","potentialImpact":"A manufacturing interruption could affect component availability and hardware delivery schedules; actual business impact is unconfirmed."}],
+  "regions":[{"name":"Taiwan","role":"Semiconductor supplier context","level":"Historical evidence"},{"name":"United States","role":"Design and headquarters","level":"Strategic footprint"}],
+  "unknowns":["Current supplier allocation; FY2022 relationship evidence is historical","Assembly network is not yet exhaustively mapped","Facility interruption, inventory and financial sensitivity"]
+}
