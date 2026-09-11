@@ -12,11 +12,12 @@ try {
   await page.setViewport({ width: 1512, height: 982 });
   page.on("pageerror", (e) => errors.push(e.message));
   await page.goto(url, { waitUntil: "networkidle2" });
+  await page.click('[data-desk="globe"]');
   await page.waitForFunction(
     () => !document.querySelector("#refresh").disabled,
     { timeout: 45000 },
   );
-  assert.equal(await page.title(), "MarketEye — Physical-world intelligence");
+  assert.equal(await page.title(), "MarketEye — Market intelligence terminal");
   assert.equal(
     await page.$eval("#company-head h2", (e) => e.textContent),
     "NVIDIA",
@@ -133,6 +134,7 @@ try {
       : req.continue(),
   );
   await page.reload({ waitUntil: "networkidle2" });
+  await page.click('[data-desk="globe"]');
   await page.waitForFunction(
     () => !document.querySelector("#refresh").disabled,
     { timeout: 45000 },

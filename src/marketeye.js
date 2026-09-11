@@ -53,7 +53,10 @@ function showDialog(title, html) {
   if (!$("detail-dialog").open) $("detail-dialog").showModal();
 }
 $("close-dialog").onclick = () => $("detail-dialog").close();
-mountMarketTerminal({onCompany: selectCompany, onLocation: location => globe?.flyTo(location)});
+mountMarketTerminal({
+  onCompany: selectCompany,
+  onLocation: (location) => globe?.flyTo(location),
+});
 function renderTab() {
   if (activeTab === "analyst") {
     renderAnalyst();

@@ -1,14 +1,14 @@
 # MarketEye
 
-**Search a company. See where it depends on the world.**
+**Your market terminal. Prices, headlines, and the world behind the move.**
 
 [![CI](https://github.com/armanbabazadeh6/MarketEye/actions/workflows/ci.yml/badge.svg)](https://github.com/armanbabazadeh6/MarketEye/actions/workflows/ci.yml)
 
-MarketEye is a geospatial market-intelligence workspace connecting public companies to physical assets, supplier campuses and nearby world events. A Cesium globe, deterministic exposure model and evidence-driven investigation tour make the reasoning visible.
+I'm Arman Babazadeh, and MarketEye is my personal market-intelligence project: a terminal-style workspace for checking stocks and commodities, reading current news, and investigating how real-world events could affect companies. It runs on your computer, with an amber command bar, a persistent watchlist, price charts, an energy desk, and a 3D supply-network globe.
 
-![MarketEye showing the historical Taiwan earthquake replay](docs/images/marketeye.png)
+![MarketEye market terminal with actual quotes and news](docs/images/terminal.png)
 
-*Actual application screenshot. The amber banner identifies the April 2024 earthquake replay; this is not a live risk claim.*
+*Actual application screenshot; prices and headlines change. MarketEye is an independent open-source project, not affiliated with Bloomberg. The geospatial foundation reuses God's Eye View, credited below.*
 
 ## Start locally
 
@@ -18,10 +18,12 @@ Use **Node.js 24.14+ within 24.x**, or **Node.js 26.x**, and a browser with WebG
 git clone https://github.com/armanbabazadeh6/MarketEye.git
 cd MarketEye
 npm ci
-npm run dev
+npm start
 ```
 
-Open the URL printed by Vite, normally **http://localhost:4173**. No API keys are needed for the core globe, USGS earthquakes, weather estimates, local analyst tools or historical replay. Internet access is required for live sources and map imagery.
+**Windows:** double-click `Start-MarketEye.cmd`. It installs dependencies on the first run and opens a standalone Edge app window when Edge is installed, or your default browser otherwise. Keep the terminal process open; Ctrl+C stops the server. Subsequent launches reuse an existing MarketEye server. Node must be installed first.
+
+`npm start` opens **http://127.0.0.1:4173** and binds to your computer's loopback interface. No API keys are needed for market quotes, headlines, the core globe, USGS earthquakes, weather estimates, local analyst tools or historical replay. Internet access is required for providers and map imagery. Set `MARKETEYE_NO_OPEN=1` to start without opening a browser.
 
 ```bash
 npm run build          # production client bundle
@@ -29,13 +31,31 @@ npm run preview        # serve built client with the retained provider proxies
 npm run test:marketeye # focused MarketEye domain tests
 npm test               # full retained upstream + MarketEye suite
 npm run qa:marketeye   # browser QA; start the dev server first
+npm run qa:terminal    # real quote/news, chart, gas question, mobile and outage checks
 ```
 
 The default is a local application. **A static-only host does not run the weather, aircraft, vessel or AI proxies.** Do not treat Vite's local development server as a hardened public production service. Production hosting needs an authenticated server deployment of the relevant adapters, appropriate provider terms, rate limits and secret management.
 
-## The 30-second flagship demo
+## Use the terminal
 
-1. Search **NVDA**. The map moves to Taiwan and shows documented TSMC campuses, NVIDIA headquarters and contextual logistics infrastructure.
+| Desk | What to do |
+| --- | --- |
+| **F1 Markets** | Enter `NVDA`, `AAPL`, `TSLA`, `MSFT`, or another valid Yahoo symbol. Inspect session change, select a chart range, and add it to your watchlist. |
+| **F2 Globe** | Explore the curated NVIDIA, Apple and Tesla footprints, public world events and investigation tours. |
+| **F3 News** | Browse Markets, Energy, Incidents or Technology. Enter a question or place in the command bar to search current headlines. |
+| **F4 Energy** | Start with crude oil and the energy wire; switch to `BZ=F`, `RB=F`, or `NG=F` in the watchlist or universe. |
+
+Try **“why is gas up”**, **“natural gas prices”**, or **“Houston refinery fire”**. The first selects gasoline futures and related reports. The terminal checks the actual available price direction—even when the question assumes a rise—and shows possible economic transmission channels. Select a headline to open its publisher report, inspect related securities, or locate a recognized region on the globe.
+
+Watchlists persist in your browser. Quotes refresh every minute; news refreshes every three minutes while the market desk is visible. Charts support 1D, 5D, 1MO, 6MO and 1Y, with pointer inspection. SPY, QQQ and DIA are ETFs, not the underlying index levels.
+
+![Gasoline research and selected news report](docs/images/energy-terminal.png)
+
+**Data boundaries:** Yahoo's public chart endpoint is an unofficial, indicative source that may be delayed or unavailable. It is not an exchange-grade quote service. Google News supplies headline links, not verified facility status or full article reporting. The event-to-market engine uses transparent keyword rules; it does not prove why an asset moved. RBOB gasoline futures are wholesale fuel contracts, not local pump prices. Open the original reporting and operator notices to verify a closure or incident.
+
+## Explore a company on the globe
+
+1. Open **F2 Globe** and search **NVDA**. The map moves to Taiwan and shows documented TSMC campuses, NVIDIA headquarters and contextual logistics infrastructure.
 2. Read the live source coverage and event-linked screening score. Zero can mean no intersecting events in the available dataset; missing coverage remains unknown.
 3. Select **Explore Taiwan 2024 replay** for a repeatable demonstration using the real USGS M7.4 Hualien event.
 4. Click the earthquake to inspect distance, score factors, asset candidates and the original source.
@@ -46,6 +66,9 @@ The replay evaluates a historical event against the **current curated footprint*
 
 ## What works
 
+- Public stock, ETF, commodity futures and Bitcoin quotes with timestamps, session comparisons and historical charts.
+- Persistent custom watchlist, searchable news, publisher links, energy research and incident triage.
+- Local desktop-style launcher and keyboard function-key navigation.
 - NVIDIA, Apple and Tesla search and watchlist selection.
 - A distinct terminal interface with source evidence, company assets and geographic dependency paths.
 - Keyless satellite imagery, street-map fallback, camera navigation and optional photorealistic 3D.
@@ -82,6 +105,9 @@ These are **transparent screening heuristics**, not statistically calibrated pro
 
 | Source | Use | Important boundary |
 | --- | --- | --- |
+| [Yahoo Finance](https://finance.yahoo.com/) | Public chart data and indicative quotes | Unofficial endpoint, possible delays/outages; futures rollovers can affect charts |
+| [Google News](https://news.google.com/) | Current headline index and publisher links | Headline-level research; no claim to full-text access or confirmed causation |
+| [EIA gasoline explainer](https://www.eia.gov/energyexplained/gasoline/factors-affecting-gasoline-prices.php) | Retail fuel price context | Wholesale futures do not equal local retail prices |
 | [NVIDIA FY2025 sustainability report](https://images.nvidia.com/aem-dam/Solutions/documents/NVIDIA-Sustainability-Report-Fiscal-Year-2025.pdf) | TSMC foundry relationship | Does not establish product allocation to a specific fab |
 | [TSMC fab directory](https://www.tsmc.com/english/aboutTSMC/TSMC_Fabs) | Supplier campus context | Approximate campus coordinates, not production-line locations |
 | [Apple FY2022 supplier list](https://www.apple.com/tw/supplier-responsibility/pdf/Apple-Supplier-List.pdf) | Historical supplier relationship | Explicitly historical; requires current revalidation |
@@ -123,9 +149,9 @@ src/exposure/         Pure deterministic screening engine
 src/impact/           Explicit evidence graph
 src/analyst/          Tool contracts, investigation planner and brief
 src/globe/            MarketEye presentation over upstream Cesium infrastructure
-src/markets/          Independent market-pricing provider interface
+src/markets/          Quote normalization, instruments, headline triage and tests
 src/ui/              Terminal styles and browser tool registration
-server/              Optional server-side analyst endpoint
+server/              Market/news proxy and optional analyst endpoint
 src/marketeye.js      Application state and UI orchestration
 ```
 
@@ -137,10 +163,10 @@ Browser QA covers live loading, search, unsupported queries, replay, score expla
 
 Current limitations are deliberate and visible:
 
-- Only three companies, with a small curated footprint; supplier coverage is not exhaustive.
+- Broad ticker lookup, but only three companies have curated geographic footprints; supplier coverage is not exhaustive.
 - Current Apple supplier evidence is incomplete; the bundled supplier relationship is explicitly historical.
 - No verified facility operating-status, shipment attribution, port shutdown or inventory feed.
-- No news/geopolitical-event correlation, exchange-grade market quotes or monetary impact estimation yet.
+- Headline-based thematic links, not verified geopolitical causation, exchange-grade quotes or monetary impact estimates.
 - Optional spatial layers are visual context; vessel/aircraft activity is not automatically treated as evidence of a company disruption.
 - Optional paid AI and photorealistic providers require your credentials; live paid-provider calls are not part of keyless validation.
 - The local Vite proxy architecture requires production server work before public deployment.
@@ -149,7 +175,7 @@ For the next development session, start with [CONTINUATION.md](docs/CONTINUATION
 
 ## Attribution and license
 
-Built by Arman Babazadeh on [Bilawal Sidhu's God's Eye View](https://github.com/bilawalsidhu/gods-eye-view), upstream commit `c7ef01827d7f12407180bc77e3955736c00cd749`. The upstream Git history and MIT license are preserved. See [original README](docs/UPSTREAM_README.md) and [LICENSE](LICENSE).
+MarketEye is built and maintained by **Arman Babazadeh**. Its market terminal, quote/news adapters, headline research workflows, company catalog and exposure tools build on the open-source geospatial foundation of [Bilawal Sidhu's God's Eye View](https://github.com/bilawalsidhu/gods-eye-view), upstream commit `c7ef01827d7f12407180bc77e3955736c00cd749`. CesiumJS powers the globe. The upstream Git history and MIT license are preserved. See [original README](docs/UPSTREAM_README.md) and [LICENSE](LICENSE).
 
 The MIT license covers code, **not all bundled third-party data or models**. TeleGeography cable data is CC BY-NC-SA 3.0 and is not licensed for commercial use. OpenStreetMap extracts carry ODbL requirements. Map imagery, weather and other live providers have separate terms. Preserve visible attribution and review [DATA_SOURCES.md](DATA_SOURCES.md) before redistribution or commercial use.
 
