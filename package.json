@@ -1,18 +1,18 @@
 {
-  "name": "gods-eye-view",
+  "name": "marketeye",
   "private": true,
-  "version": "0.1.1",
-  "description": "A real-time intelligence console for planet Earth — photorealistic 3D globe, live aircraft/ships/satellites/earthquakes/CCTV, and hands-free voice control. Runs in a browser.",
+  "version": "0.1.0",
+  "description": "Evidence-backed geospatial company exposure intelligence built on Cesium and Gods Eye View.",
   "type": "module",
   "license": "MIT",
-  "author": "Bilawal Sidhu",
-  "homepage": "https://github.com/bilawalsidhu/gods-eye-view#readme",
+  "author": "Arman Babazadeh",
+  "homepage": "https://github.com/armanbabazadeh6/MarketEye#readme",
   "repository": {
     "type": "git",
-    "url": "https://github.com/bilawalsidhu/gods-eye-view.git"
+    "url": "https://github.com/armanbabazadeh6/MarketEye.git"
   },
   "bugs": {
-    "url": "https://github.com/bilawalsidhu/gods-eye-view/issues"
+    "url": "https://github.com/armanbabazadeh6/MarketEye/issues"
   },
   "engines": {
     "node": ">=24.14.0 <25 || >=26 <27"
@@ -40,7 +40,9 @@
     "preview": "vite preview",
     "test": "node scripts/run-unit-tests.mjs",
     "test:track": "node scripts/track-regression.mjs",
-    "qa:map-source-tray": "node scripts/qa-map-source-tray.mjs"
+    "qa:map-source-tray": "node scripts/qa-map-source-tray.mjs",
+    "test:marketeye": "node --test src/exposure/engine.test.mjs src/events/normalize.test.mjs src/providers/worldEvents.test.mjs src/analyst/analyst.test.mjs src/analyst/proxy.test.mjs",
+    "qa:marketeye": "node scripts/qa-marketeye.mjs"
   },
   "dependencies": {
     "@mapbox/vector-tile": "^3.0.0",
