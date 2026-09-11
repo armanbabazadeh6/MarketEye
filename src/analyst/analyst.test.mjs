@@ -19,3 +19,7 @@ test('investigation abort prevents subsequent steps',async()=>{
 test('brief marks missing coverage unavailable and includes provenance and unknowns',()=>{
  const b=generateBrief(companies[0],assessCompany(companies[0],[]),{events:[],sources:[]});assert.match(b,/UNAVAILABLE/);assert.match(b,/Unknowns/);assert.match(b,/nvidia.com/);assert.match(b,/Not investment advice/);
 });
+test('historical replay is explicit in exported briefs',()=>{
+ const b=generateBrief(companies[0],assessCompany(companies[0],[]),{events:[],sources:[],mode:'replay'});
+ assert.match(b,/HISTORICAL REPLAY/);assert.match(b,/current curated company footprint/);
+});
