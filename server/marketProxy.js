@@ -2,6 +2,7 @@ import {
   normalizeChart,
   normalizeHeadlines,
 } from "../src/markets/normalize.js";
+import { normalizeOfficialAlerts } from "../src/events/officialAlerts.js";
 export function marketProxy({
   parseNews,
   fetcher = (...args) => fetch(...args),
@@ -52,13 +53,14 @@ export function marketProxy({
       inflight.delete(key);
     }
   }
-  async function request(url) {
+  async function request(url, extraHeaders = {}) {
     let last;
     for (let i = 0; i < 2; i++)
       try {
         const response = await fetcher(url, {
           headers: {
             "User-Agent": "MarketEye/0.2 (personal research terminal)",
+            ...extraHeaders,
           },
           signal: AbortSignal.timeout(10000),
         });
@@ -138,13 +140,38 @@ export function marketProxy({
             if (!/<rss\b/i.test(xml)) throw Error("Invalid news feed");
             return {
               query: q,
-              articles: normalizeHeadlines(parseNews(xml, 35), now()),
+              articles: normalizeHeadlines(parseNews(xml, 100), now()),
               source: "Google News RSS",
               coverage:
                 "Headline index; open publisher reporting to verify details.",
             };
           },
           180000,
+        );
+        return reply(200, result);
+      }
+      if (kind === "alerts") {
+        const result = await cached(
+          "nws:active:severe",
+          async () => ({
+            articles: normalizeOfficialAlerts(
+              JSON.parse(
+                await request(
+                  "https://api.weather.gov/alerts/active?status=actual&severity=Extreme,Severe",
+                  {
+                    Accept: "application/geo+json",
+                    "User-Agent":
+                      "MarketEye (https://github.com/armanbabazadeh6/MarketEye)",
+                  },
+                ),
+              ),
+              now(),
+            ),
+            source: "National Weather Service",
+            coverage:
+              "Active US alerts with Severe or Extreme CAP severity. A watch or forecast alert is not confirmed facility damage.",
+          }),
+          120000,
         );
         return reply(200, result);
       }

@@ -72,6 +72,7 @@ export async function createMarketGlobe(onSelect, onStatus) {
       });
     });
   function showCompany(company) {
+    viewer.entities.removeById("marketeye-news-context");
     assets.entities.removeAll();
     paths.entities.removeAll();
     const color = Cesium.Color.fromCssColorString(company.color);
@@ -151,6 +152,29 @@ export async function createMarketGlobe(onSelect, onStatus) {
     flyTo,
     showCompany,
     showEvents,
+    showNewsContext(location) {
+      viewer.entities.removeById("marketeye-news-context");
+      viewer.entities.add({
+        id: "marketeye-news-context",
+        position: position(location),
+        point: {
+          pixelSize: 12,
+          color: Cesium.Color.fromCssColorString("#ffb454"),
+          outlineColor: Cesium.Color.BLACK,
+          outlineWidth: 2,
+        },
+        label: {
+          text: "NEWS REGION · APPROXIMATE",
+          font: "12px monospace",
+          fillColor: Cesium.Color.WHITE,
+          showBackground: true,
+          pixelOffset: new Cesium.Cartesian2(0, -25),
+          disableDepthTestDistance: Number.POSITIVE_INFINITY,
+        },
+      });
+      viewer.scene.requestRender();
+      return flyTo(location);
+    },
     async enablePhotorealistic() {
       if (maps.googleTileset) return maps.setStack("photoreal");
       const { tileset, errors } = await loadPhotorealisticTileset(Cesium, {

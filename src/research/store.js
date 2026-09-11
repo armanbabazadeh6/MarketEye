@@ -18,6 +18,36 @@ export function validateStory(value) {
       ? new Date(value.savedAt).toISOString()
       : new Date().toISOString(),
     note: clean(value.note).slice(0, 6000),
+    ...(value.official === true && url.hostname === "api.weather.gov"
+      ? {
+          official: true,
+          description: clean(value.description).slice(0, 8000),
+          instruction: clean(value.instruction).slice(0, 4000),
+          severity: clean(value.severity).slice(0, 30),
+          certainty: clean(value.certainty).slice(0, 30),
+          urgency: clean(value.urgency).slice(0, 30),
+          onset: Number.isFinite(Date.parse(value.onset))
+            ? new Date(value.onset).toISOString()
+            : null,
+          expires: Number.isFinite(Date.parse(value.expires))
+            ? new Date(value.expires).toISOString()
+            : null,
+          location:
+            value.location &&
+            Number.isFinite(value.location.latitude) &&
+            Math.abs(value.location.latitude) <= 90 &&
+            Number.isFinite(value.location.longitude) &&
+            Math.abs(value.location.longitude) <= 180
+              ? {
+                  latitude: value.location.latitude,
+                  longitude: value.location.longitude,
+                  name: clean(value.location.name).slice(0, 160),
+                  coordinatePolicy:
+                    "Approximate alert area reference from a saved research record.",
+                }
+              : null,
+        }
+      : {}),
   };
 }
 export function parseResearch(text) {
@@ -56,7 +86,12 @@ export class ResearchStore {
     }
   }
   commit(next) {
-    this.storage.setItem(RESEARCH_KEY, JSON.stringify(next));
+    const encoded = JSON.stringify(next);
+    if (new TextEncoder().encode(encoded).length > 1900000)
+      throw Error(
+        "Research library is near its portable 2 MB limit. Back up and remove old stories first.",
+      );
+    this.storage.setItem(RESEARCH_KEY, encoded);
     this.data = next;
     this.error = null;
   }

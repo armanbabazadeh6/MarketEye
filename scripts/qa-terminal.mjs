@@ -64,7 +64,7 @@ try {
   );
   await page.click("#market-refresh");
   await page.waitForFunction(
-    () => document.querySelector("#news-state").textContent === "UNAVAILABLE",
+    () => document.querySelector("#news-state").textContent === "STALE",
     { timeout: 30000 },
   );
   assert.equal(errors.length, 0, errors.join("\n"));

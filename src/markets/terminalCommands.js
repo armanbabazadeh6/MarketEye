@@ -6,6 +6,24 @@ export function parseCommand(input) {
     verb = parts[0].toUpperCase();
   if (!text) return { type: "empty" };
   if (["HELP", "?"].includes(verb)) return { type: "help" };
+  if (verb === "BRIEF") {
+    const instrument = parts[1] ? resolveInstrument(parts[1]) : null;
+    if (parts[1] && !instrument)
+      return {
+        type: "error",
+        message: "Use BRIEF followed by a valid ticker.",
+      };
+    return { type: "brief", symbol: instrument?.symbol };
+  }
+  if (["ANALYST", "ASK"].includes(verb)) {
+    const question = parts.slice(1).join(" ");
+    return question
+      ? { type: "analyst", question }
+      : {
+          type: "error",
+          message: "Use ANALYST followed by a company exposure question.",
+        };
+  }
   if (["MON", "MONITOR"].includes(verb))
     return { type: "desk", desk: "monitor" };
   if (["STATUS", "FEEDS"].includes(verb))
@@ -18,7 +36,7 @@ export function parseCommand(input) {
     return parts.length > 1
       ? { type: "news", query: parts.slice(1).join(" ") }
       : { type: "desk", desk: "news" };
-  if (["GEO", "DES"].includes(verb)) {
+  if (["GEO", "DES", "INVESTIGATE", "INV"].includes(verb)) {
     const symbol = parts[1]?.toUpperCase();
     if (!["NVDA", "AAPL", "TSLA"].includes(symbol))
       return {
@@ -26,7 +44,10 @@ export function parseCommand(input) {
         message:
           "Curated geographic coverage: NVDA, AAPL, TSLA. Use a ticker alone for other market quotes.",
       };
-    return { type: "geo", symbol };
+    return {
+      type: ["INV", "INVESTIGATE"].includes(verb) ? "investigate" : "geo",
+      symbol,
+    };
   }
   if (["COMPARE", "COMP"].includes(verb)) {
     const symbols = [

@@ -127,7 +127,9 @@ export function classifyHeadline(article) {
   return {
     ...article,
     channels: matches,
-    location: places.find((p) => p.pattern.test(article.title)) || null,
+    location: article.official
+      ? article.location
+      : places.find((p) => p.pattern.test(article.title)) || null,
     relationship: "Headline-based thematic link; not verified causation",
   };
 }

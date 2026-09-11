@@ -1,4 +1,65 @@
 /* MarketEye's working surface: compact type, square controls, data before decoration. */
+.news-controls {
+  flex-wrap: wrap;
+}
+.official-alert-details,
+.regional-links {
+  border-top: 1px solid #3b4d5b;
+  padding-top: 12px;
+  margin-top: 15px;
+  font:
+    10px/1.6 Consolas,
+    monospace;
+}
+.official-alert-details dl {
+  display: grid;
+  grid-template-columns: 80px 1fr;
+  margin: 10px 0;
+}
+.official-alert-details dt {
+  color: #769ab3;
+}
+.official-alert-details dd {
+  margin: 0;
+  color: #bdcdda;
+}
+.official-alert-details details {
+  margin: 12px 0;
+}
+.official-alert-details summary {
+  cursor: pointer;
+  color: #86b7da;
+}
+.official-alert-details p {
+  white-space: pre-wrap;
+}
+.regional-links > div {
+  padding: 10px 0;
+  border-bottom: 1px solid #2a3b49;
+}
+.regional-links button {
+  display: block;
+  background: none;
+  border: 0;
+  color: #e8b367;
+  text-align: left;
+  font-size: 11px;
+  padding: 0;
+}
+.regional-links small {
+  display: block;
+  color: #839bae;
+}
+.regional-links a {
+  font-size: 10px;
+}
+.article-detail {
+  overflow-wrap: anywhere;
+}
+.map-caption strong {
+  max-height: 75px;
+  overflow: hidden;
+}
 .terminal-grid[hidden],
 #market-monitor[hidden],
 #terminal-utility[hidden] {

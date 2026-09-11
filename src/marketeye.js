@@ -55,8 +55,34 @@ function showDialog(title, html) {
 $("close-dialog").onclick = () => $("detail-dialog").close();
 mountMarketTerminal({
   getWorldSources: () => snapshot.sources,
+  onInvestigate: investigate,
+  onAnalyst: async (question) => {
+    const target = companies.find((c) =>
+      new RegExp(`\\b(${c.ticker}|${c.name})\\b`, "i").test(question),
+    );
+    if (target && target !== selected) await selectCompany(target.ticker);
+    document.querySelector('[data-tab="analyst"]').click();
+    await askAnalyst(question);
+  },
+  onGeographicBrief: async (ticker) => {
+    const company = companies.find((c) => c.ticker === ticker);
+    if (!company)
+      return "No curated geographic coverage for this security. This does not imply no physical exposure.";
+    const evidence = await provider.refresh(company);
+    return generateBrief(
+      company,
+      assessCompany(company, evidence.events),
+      evidence,
+    );
+  },
   onCompany: selectCompany,
-  onLocation: (location) => globe?.flyTo(location),
+  onLocation: (location, article) => {
+    globe?.showNewsContext(location);
+    $("map-heading").textContent = location.name;
+    $("map-subtitle").textContent = article?.title || "News context";
+    $("region-caption").textContent = "NEWS REFERENCE / APPROXIMATE REGION";
+    $("map-ticker").textContent = "NEWS";
+  },
 });
 function renderTab() {
   if (activeTab === "analyst") {
@@ -159,7 +185,7 @@ function selectCompany(ticker) {
   globe?.flyTo(selected.focus);
   $("search-results").innerHTML = "";
   $("company-search").value = "";
-  void refreshSources();
+  return refreshSources();
 }
 $("company-search").oninput = (e) => {
   $("search-results").innerHTML =
@@ -393,7 +419,8 @@ function cancelInvestigation() {
   $("investigate").onclick = () => void investigate();
 }
 async function investigate(ticker = selected.ticker) {
-  if (ticker !== selected.ticker) selectCompany(ticker);
+  if (ticker !== selected.ticker) await selectCompany(ticker);
+  if (ticker !== selected.ticker) return false;
   if (!globe) {
     showDialog(
       "Globe unavailable",

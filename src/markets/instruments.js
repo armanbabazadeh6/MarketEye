@@ -167,6 +167,7 @@ export function resolveInstrument(value) {
   );
 }
 export const topics = {
+  "US alerts": "@official-alerts",
   markets: "stock market economy when:2d",
   energy: "oil gasoline natural gas refinery prices when:3d",
   incidents:

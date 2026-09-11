@@ -11,8 +11,13 @@ import {
 } from "../markets/drivers.js";
 import "./market-terminal.css";
 import { Newsroom } from "./newsroom.js";
+import { downloadFile } from "./newsroom.js";
+import { buildDossier } from "../research/dossier.js";
 import { MarketMonitor } from "./marketMonitor.js";
 import { parseCommand } from "../markets/terminalCommands.js";
+import { MarketClient } from "../markets/client.js";
+import { companies } from "../companies/catalog.js";
+import { linkRegionalFootprint } from "../research/geographicLinks.js";
 import "./research-terminal.css";
 const esc = (v) =>
   String(v ?? "").replace(
@@ -45,6 +50,9 @@ const stamp = (v) =>
 export function mountMarketTerminal({
   onCompany,
   onLocation,
+  onInvestigate,
+  onAnalyst,
+  onGeographicBrief,
   getWorldSources = () => [],
 }) {
   let watch;
@@ -142,6 +150,12 @@ export function mountMarketTerminal({
         ["GP NVDA 6mo", "Open a historical chart"],
         ["NEWS Houston refinery fire", "Search recent reporting"],
         ["GEO NVDA", "Open a curated company footprint"],
+        ["INV NVDA", "Tour the geographic evidence"],
+        [
+          "ANALYST Why is NVIDIA exposed to Taiwan?",
+          "Run the structured geographic analyst",
+        ],
+        ["BRIEF NVDA", "Export prices, headlines and geographic evidence"],
         ["COMPARE NVDA AAPL TSLA", "Compare daily price returns"],
         ["MON", "Open the quote monitor"],
         ["ENERGY", "Open the energy desk"],
@@ -162,18 +176,14 @@ export function mountMarketTerminal({
         key: "Market quotes / " + selected.symbol,
         ...quotes.get(selected.symbol),
       },
-      { key: "Google News RSS", ...news },
+      { key: news.source || "Google News RSS", ...news },
       ...getWorldSources(),
     ];
     utility.innerHTML = `<div class="panel-heading">SOURCE HEALTH / CURRENT SESSION</div><table class="market-table"><thead><tr><th>Provider / coverage</th><th>State</th><th>Retrieved</th><th>Source timestamp</th><th>Details</th></tr></thead><tbody>${sources.map((s) => `<tr><td>${esc(s.key)}</td><td>${esc(s.status || "not loaded")}</td><td>${stamp(s.retrievedAt)}</td><td>${stamp(s.asOf)}</td><td>${esc(s.error || s.coverage || s.dataNotice || "")}</td></tr>`).join("")}</tbody></table><p class="feed-note">Ready/cached means a request succeeded; it does not guarantee real-time data or exhaustive coverage. Stale means a refresh failed and the previous successful snapshot is retained. Quotes cache for 60 seconds, headlines for 180 seconds. Saved research is independent of provider availability.</p>`;
   }
-  async function api(params) {
-    const response = await fetch(
-      "/api/marketeye/market?" + new URLSearchParams(params),
-      { signal: AbortSignal.timeout(25000) },
-    );
-    if (!response.ok) throw Error(`Feed HTTP ${response.status}`);
-    return response.json();
+  const marketClient = new MarketClient();
+  function api(params) {
+    return marketClient.request(params);
   }
   function desk(value) {
     mode = value;
@@ -313,12 +323,37 @@ export function mountMarketTerminal({
     newsroom.update(news, activeArticle);
   }
   function renderDrivers() {
+    if (document.activeElement?.id === "story-note") return;
     const q = quotes.get(selected.symbol),
       d = explainMove(selected, q, news.articles || []),
       article = activeArticle === null ? null : classifyHeadline(activeArticle);
     $("market-drivers").innerHTML =
       `<div class="driver-intro"><span class="eyebrow">OBSERVED PRICE</span><h2>${esc(selected.name)}</h2><p>${esc(d.observed)}</p><span class="research-badge">CAUSATION UNCONFIRMED</span></div>${article ? `<section class="article-detail"><span class="eyebrow">SELECTED REPORT</span><h3>${esc(article.title)}</h3><p>${esc(article.domain)} · ${stamp(article.publishedAt)}</p><a href="${esc(article.url)}" target="_blank" rel="noopener noreferrer">Read publisher report ↗</a>${article.location ? `<button id="headline-map">Locate ${esc(article.location.name)} ↗</button><small>Approximate region inferred from headline.</small>` : ""}</section>` : ""}<div class="driver-content"><span class="eyebrow">POSSIBLE TRANSMISSION CHANNELS</span>${(article ? article.channels : d.channels).map((c) => `<section class="transmission"><h3>${esc(c.label)}</h3><div class="transmission-path">${c.path.map((p) => `<span>${esc(p)}</span>`).join("<i>↓</i>")}</div><p>${esc(c.explanation)}</p><div class="related-symbols">${c.symbols.map((s) => `<button data-symbol="${s}">${s}</button>`).join("")}</div></section>`).join("") || "<p>Select a headline to inspect a possible market connection.</p>"}<p class="evidence-note">${esc(d.conclusion)}</p><p class="evidence-note">${esc(d.caveat)}</p>${selected.symbol === "RB=F" ? `<a href="${d.sourceUrl}" target="_blank" rel="noopener noreferrer">EIA: what determines pump prices ↗</a>` : ""}${["NVDA", "AAPL", "TSLA"].includes(selected.symbol) ? '<button id="company-map" class="map-link">Explore company supply network ↗</button>' : ""}<a class="quote-source" href="https://finance.yahoo.com/quote/${encodeURIComponent(selected.symbol)}/" target="_blank" rel="noopener noreferrer">Quote source: Yahoo Finance ↗</a><p class="evidence-note">Indicative public feed; may be delayed. Headline classification is deterministic research assistance, not verified causation.</p></div>`;
     newsroom.attachNotes(article);
+    if (article?.official) {
+      const details = document.createElement("section");
+      details.className = "official-alert-details";
+      details.innerHTML = `<span class="research-badge">NWS OFFICIAL ALERT / ${Date.parse(article.expires) <= Date.now() ? "EXPIRED" : "ACTIVE AT RETRIEVAL"}</span><dl><dt>Severity</dt><dd>${esc(article.severity)}</dd><dt>Certainty</dt><dd>${esc(article.certainty)}</dd><dt>Urgency</dt><dd>${esc(article.urgency)}</dd><dt>Onset</dt><dd>${stamp(article.onset)}</dd><dt>Expires</dt><dd>${stamp(article.expires)}</dd></dl><details><summary>Read alert text</summary><p>${esc(article.description)}</p><p>${esc(article.instruction)}</p></details><small>An official watch/warning describes a hazard or forecast, not confirmed operational disruption.</small>`;
+      document.querySelector(".article-detail").append(details);
+      const note = $("headline-map")?.nextElementSibling;
+      if (note)
+        note.textContent =
+          article.location?.coordinatePolicy || "Published alert area";
+    }
+    if (article?.location) {
+      const matches = linkRegionalFootprint(article.location, companies),
+        section = document.createElement("section");
+      section.className = "regional-links";
+      section.innerHTML = `<span class="eyebrow">CURATED FOOTPRINT / REGIONAL SCREEN</span>${matches.map((m) => `<div><button data-region-company="${m.ticker}">${m.ticker} · ${esc(m.asset.name)}</button><small>${Math.round(m.distanceKm)} km from approximate region center</small><a href="${esc(m.asset.sourceUrl)}" target="_blank" rel="noopener noreferrer">Relationship source ↗</a></div>`).join("") || "<p>No curated company assets within 250 km of this regional reference point. Coverage is limited to three companies.</p>"}<p>Regional proximity is a research lead. The incident location, affected operations and market impact remain unverified.</p>`;
+      document.querySelector(".article-detail").append(section);
+      section.onclick = (e) => {
+        const b = e.target.closest("[data-region-company]");
+        if (b) {
+          desk("globe");
+          onCompany(b.dataset.regionCompany);
+        }
+      };
+    }
     if ($("company-map"))
       $("company-map").onclick = () => {
         desk("globe");
@@ -327,17 +362,24 @@ export function mountMarketTerminal({
     if ($("headline-map"))
       $("headline-map").onclick = () => {
         desk("globe");
-        onLocation(article.location);
+        onLocation(article.location, article);
       };
   }
   async function loadNews(query) {
     const g = ++newsGeneration;
-    activeArticle = null;
-    news = { status: "loading", query, articles: [] };
+    const previous = news.query === query ? news : null;
+    if (!previous) activeArticle = null;
+    news = previous
+      ? { ...previous, status: "refreshing" }
+      : { status: "loading", query, articles: [] };
     renderNews();
     renderDrivers();
     try {
-      const result = await api({ kind: "news", q: query });
+      const result = await api(
+        query === "@official-alerts"
+          ? { kind: "alerts" }
+          : { kind: "news", q: query },
+      );
       if (g !== newsGeneration) return;
       news = result;
       news.query = query;
@@ -481,6 +523,41 @@ export function mountMarketTerminal({
     if (command.type === "geo") {
       desk("globe");
       onCompany(command.symbol);
+      return;
+    }
+    if (command.type === "investigate") {
+      desk("globe");
+      onInvestigate?.(command.symbol);
+      return;
+    }
+    if (command.type === "analyst") {
+      desk("globe");
+      onAnalyst?.(command.question);
+      return;
+    }
+    if (command.type === "brief") {
+      const instrument = resolveInstrument(command.symbol || selected.symbol);
+      message(
+        `Building ${instrument.symbol} dossier: quote, news, geographic evidence…`,
+      );
+      Promise.all([
+        api({ kind: "quote", symbol: instrument.symbol, range: "1d" }),
+        api({ kind: "news", q: instrument.query + " when:3d" }),
+        onGeographicBrief?.(instrument.symbol),
+      ])
+        .then(([quote, headlines, geographic]) => {
+          downloadFile(
+            `MarketEye-${instrument.symbol.replace(/[^A-Z0-9]/g, "")}-dossier.md`,
+            buildDossier(instrument, quote, headlines, geographic),
+            "text/markdown",
+          );
+          message(
+            `${instrument.symbol} dossier exported with source timestamps and availability.`,
+          );
+        })
+        .catch((error) =>
+          message("Dossier could not be generated: " + error.message),
+        );
       return;
     }
     if (command.type === "compare") {
