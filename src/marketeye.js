@@ -14,6 +14,7 @@ import { normalizeUsgs } from "./events/normalize.js";
 import taiwanReplay from "../data/events/taiwan-2024.json";
 import { registerMarketTools } from "./ui/webmcp.js";
 import "./ui/terminal.css";
+import { mountMarketTerminal } from "./ui/marketTerminal.js";
 const $ = (id) => document.getElementById(id);
 const esc = (value) =>
   String(value ?? "").replace(
@@ -52,6 +53,7 @@ function showDialog(title, html) {
   if (!$("detail-dialog").open) $("detail-dialog").showModal();
 }
 $("close-dialog").onclick = () => $("detail-dialog").close();
+mountMarketTerminal({onCompany: selectCompany, onLocation: location => globe?.flyTo(location)});
 function renderTab() {
   if (activeTab === "analyst") {
     renderAnalyst();

@@ -47,6 +47,7 @@ import { createRequire } from 'node:module';
 import { defineConfig, loadEnv } from 'vite';
 import cesium from 'vite-plugin-cesium';
 import { analystProxy } from './server/analystProxy.js';
+import { marketProxy } from './server/marketProxy.js';
 import { normalizeRadioCountryInput } from './src/data/radioCountry.js';
 import {
   normalizeRegionalArticles,
@@ -7745,6 +7746,7 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [
       analystProxy(),
+      marketProxy({ parseNews: normalizeRssArticles }),
       cesium(),
       openSkyProxy(),
       celestrakProxy(),

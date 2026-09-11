@@ -1,0 +1,15 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {normalizeChart,normalizeHeadlines} from './normalize.js';
+import {routeQuestion,explainMove,classifyHeadline} from './drivers.js';
+import {resolveInstrument} from './instruments.js';
+import {marketProxy} from '../../server/marketProxy.js';
+const payload={chart:{result:[{meta:{regularMarketPrice:110,chartPreviousClose:80},timestamp:[1,2,3],indicators:{quote:[{close:[100,null,110]}]}}]}};
+test('long range baseline must never be presented as daily change',()=>{assert.equal(normalizeChart(payload,'TEST','1mo').change,null);assert.equal(normalizeChart(payload,'TEST','1d').change,30);assert.equal(normalizeChart(payload,'TEST').points.length,2);});
+test('invalid quotes fail explicitly',()=>assert.throws(()=>normalizeChart({},'TEST')));
+test('news drops stale, future and duplicate headlines',()=>{const now=Date.now(),row={title:'A refinery closes',url:'https://example.com',publishedAt:new Date(now).toISOString()};assert.equal(normalizeHeadlines([row,row,{...row,title:'Old',publishedAt:'2020-01-01'},{...row,title:'Future',publishedAt:new Date(now+86400000).toISOString()}],now).length,1);});
+test('gas and natural gas route to different contracts',()=>{assert.equal(routeQuestion('why gas is up').symbol,'RB=F');assert.equal(routeQuestion('natural gas prices').symbol,'NG=F');});
+test('explanation follows observed direction, not the question premise',()=>{const d=explainMove(resolveInstrument('RB=F'),{changePercent:-2},[]);assert.match(d.observed,/down 2.00%/);assert.match(d.caveat,/not the price at your local pump/);assert.equal(d.evidence.length,0);});
+test('incidents are thematic links and locations are approximate',()=>{const a=classifyHeadline({title:'Refinery fire in Houston'});assert.equal(a.location.longitude,-95.37);assert.ok(a.channels.some(c=>c.id==='incident'));assert.match(a.relationship,/not verified/);});
+test('proxy installs without returning connect as a post hook',()=>{let routes=[];const plugin=marketProxy({parseNews:()=>[]});assert.equal(plugin.configureServer({middlewares:{use:(...r)=>{routes.push(r);return {};}}}),undefined);assert.equal(routes.length,2);});
+test('quote proxy coalesces requests and rejects unsafe symbols',async()=>{let handler,calls=0;const plugin=marketProxy({fetcher:async()=>{calls++;return {ok:true,headers:new Headers(),text:async()=>JSON.stringify(payload)};}});plugin.configureServer({middlewares:{use:(path,fn)=>{if(path.endsWith('/market'))handler=fn;}}});const run=url=>new Promise(resolve=>handler({method:'GET',url},{writeHead(status){this.status=status;},end(body){resolve({status:this.status,...JSON.parse(body)});}}));const [a,b]=await Promise.all([run('?kind=quote&symbol=TEST'),run('?kind=quote&symbol=TEST')]);assert.equal(calls,1);assert.equal(a.price,110);assert.equal(b.price,110);assert.equal((await run('?kind=quote&symbol=http://evil')).status,400);});
